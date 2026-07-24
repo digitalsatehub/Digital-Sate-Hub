@@ -7,7 +7,7 @@ import {
   IndustryItem
 } from '../types';
 
-export const LOGO_URL = 'https://res.cloudinary.com/ug0d8nwi/image/upload/v1784891326/Digital_Sate_Hub_Logo_raunki.png';
+export const LOGO_URL = 'https://res.cloudinary.com/ug0d8nwi/image/upload/v1784901222/Digitla_Sate_Hub_Logo_ki3gow.png';
 
 export const PLATFORMS_LIST = [
   'GoHighLevel',
