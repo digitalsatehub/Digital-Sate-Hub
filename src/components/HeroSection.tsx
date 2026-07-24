@@ -22,7 +22,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   const currentVideoUrl = videoUrl || DEFAULT_INTRO_VIDEO;
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Dynamic alternating phrase rotation in Capital Title Case
   const PHRASES = ["Talk Systems", "Scale Your Revenue"];
@@ -125,13 +125,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
         </div>
 
-        {/* Video Player with Centered Play Button Overlay */}
-        <div className="w-full max-w-4xl relative rounded-2xl overflow-hidden shadow-2xl shadow-indigo-950/80 border border-indigo-500/20 bg-black group/video">
+        {/* Medium Sized Video Player with Tactile 3D Play Button */}
+        <div className="w-full max-w-2xl relative rounded-2xl overflow-hidden shadow-2xl shadow-indigo-950/90 border border-indigo-500/30 bg-black group/video">
           <video
             ref={videoRef}
             src={currentVideoUrl}
-            autoPlay
-            muted
             loop
             controls
             playsInline
@@ -140,11 +138,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             className="w-full h-auto rounded-2xl object-cover aspect-video"
           />
 
-          {/* Centered Play / Pause Button Overlay */}
+          {/* Centered 3D Play / Pause Button Overlay */}
           <div
             onClick={togglePlay}
-            className={`absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-all cursor-pointer ${
-              isPlaying ? 'opacity-0 hover:opacity-100' : 'opacity-100 bg-black/40'
+            className={`absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/20 transition-all cursor-pointer ${
+              isPlaying ? 'opacity-0 hover:opacity-100' : 'opacity-100 bg-black/50'
             }`}
           >
             <button
@@ -153,14 +151,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 togglePlay();
               }}
               aria-label={isPlaying ? "Pause video" : "Play video"}
-              className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#1817B6]/90 hover:bg-indigo-600 text-white flex items-center justify-center shadow-2xl shadow-indigo-600/60 border border-indigo-300/40 transition-all duration-300 transform hover:scale-110 ${
-                isPlaying ? 'scale-90' : 'scale-100 animate-pulse'
-              }`}
+              className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-b from-indigo-400 via-[#1817B6] to-[#0b0840] text-white flex items-center justify-center transition-all duration-300 transform active:translate-y-1 ${
+                isPlaying ? 'scale-90' : 'scale-100 hover:scale-105'
+              } border-t border-indigo-200/60 border-b-4 border-b-indigo-950 shadow-[0_12px_30px_rgba(24,23,182,0.8),0_8px_0_rgba(10,6,50,0.95),inset_0_3px_6px_rgba(255,255,255,0.4),inset_0_-4px_6px_rgba(0,0,0,0.6)] group-hover/video:shadow-[0_18px_40px_rgba(99,102,241,0.9),0_8px_0_rgba(10,6,50,0.95),inset_0_3px_6px_rgba(255,255,255,0.5)]`}
             >
+              {/* Inner 3D ring accent */}
+              <div className="absolute inset-1.5 rounded-full border border-indigo-300/30 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+
               {isPlaying ? (
-                <Pause className="w-8 h-8 text-white fill-white" />
+                <Pause className="w-9 h-9 text-white fill-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] relative z-10" />
               ) : (
-                <Play className="w-8 h-8 text-white fill-white ml-1.5" />
+                <Play className="w-9 h-9 text-white fill-white ml-1.5 drop-shadow-[0_3px_6px_rgba(0,0,0,0.9)] relative z-10" />
               )}
             </button>
           </div>
