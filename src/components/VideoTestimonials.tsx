@@ -98,7 +98,7 @@ interface VideoTestimonialsProps {
 
 export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBooking }) => {
   return (
-    <section className="py-20 lg:py-28 bg-[#12063B] text-white relative border-y border-indigo-900/50 overflow-hidden">
+    <section className="py-20 lg:py-28 bg-[#12063B] text-white relative border-y border-indigo-900/50 overflow-x-clip">
       {/* Background Ambient Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[160px] pointer-events-none" />
 
