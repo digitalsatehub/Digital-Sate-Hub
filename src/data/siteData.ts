@@ -95,11 +95,9 @@ export const HERO_SHOWCASE_ITEMS = [
 ];
 
 export const STATS_COUNTERS = [
-  { value: 150, suffix: '+', label: 'Projects Completed', highlight: 'Turnkey Digital Assets' },
-  { value: 20, suffix: '+', label: 'Industries Served', highlight: 'Proven Across B2B & B2C' },
-  { value: 500, suffix: '+', label: 'Marketing Automations Built', highlight: 'Hours Saved Daily' },
-  { value: 95, suffix: '%', label: 'Client Satisfaction', highlight: 'Long-Term Retention' },
-  { value: 10, suffix: '+', label: 'Platforms Supported', highlight: 'CRM & Funnel Ecosystems' }
+  { value: 50, suffix: '+', label: 'Projects Completed', highlight: 'Turnkey Digital Assets' },
+  { value: 20, suffix: '+', label: 'Satisfied Clients', highlight: 'Long-Term Retention' },
+  { value: 4, suffix: '+', label: 'Years of Experience', highlight: 'Proven Industry Expertise' }
 ];
 
 export const PAIN_POINTS = [

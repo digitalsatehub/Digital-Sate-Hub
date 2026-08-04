@@ -8,7 +8,7 @@ import { Footer } from './components/Footer';
 // Homepage Sections
 import { HeroSection } from './components/HeroSection';
 import { SocialProofCounters } from './components/SocialProofCounters';
-import { ProblemSection } from './components/ProblemSection';
+import { AboutUsSection } from './components/AboutUsSection';
 import { SolutionSection } from './components/SolutionSection';
 import { FeaturedServices } from './components/FeaturedServices';
 import { WhyChooseUs } from './components/WhyChooseUs';
@@ -69,11 +69,11 @@ export function App() {
               onNavigatePortfolio={() => handleNavigate('portfolio')}
             />
 
-            {/* 2. Social Proof (Animated Numbers Only) */}
+            {/* 2. Social Proof (Continuous Partner Logos Stream) */}
             <SocialProofCounters />
 
-            {/* 3. Problem Section (Pain Points & Pivot) */}
-            <ProblemSection onOpenBooking={() => setIsBookingOpen(true)} />
+            {/* 3. About Us Section */}
+            <AboutUsSection />
 
             {/* 4. Solution Section (Growth Philosophy & Ecosystems) */}
             <SolutionSection onOpenBooking={() => setIsBookingOpen(true)} />
