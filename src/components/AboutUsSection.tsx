@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Layers, Users, Award, Sparkles } from 'lucide-react';
+import { Layers, Users, Award } from 'lucide-react';
 
 export const STATS = [
   { value: 50, suffix: '+', label: 'Projects Completed', highlight: 'Turnkey Digital Assets', icon: Layers },
@@ -64,17 +64,17 @@ export const AboutUsSection: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
-          {/* Left Column: Image */}
+          {/* Left Column: Image (Optimized & Anchored to Top) */}
           <div className="lg:col-span-5 relative group">
             <div className="absolute -inset-2 bg-gradient-to-r from-[#1817B6] to-indigo-500 rounded-3xl opacity-30 group-hover:opacity-50 blur-xl transition-all duration-500 pointer-events-none" />
             
             <div className="relative rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl shadow-indigo-950/90 bg-slate-900/60 w-full">
               <img
-                src="https://res.cloudinary.com/ug0d8nwi/image/upload/v1785842181/IMG_4086_yis0ue.jpg"
+                src="https://res.cloudinary.com/ug0d8nwi/image/upload/f_auto,q_auto,w_1200/v1785842181/IMG_4086_yis0ue.jpg"
                 alt="About Us - Digital Sate Hub"
                 referrerPolicy="no-referrer"
-                className="w-full h-auto object-cover object-center max-h-[520px] transition-transform duration-700 group-hover:scale-105"
-                loading="lazy"
+                className="w-full h-auto object-cover object-top min-h-[380px] max-h-[540px] transition-transform duration-700 group-hover:scale-105"
+                loading="eager"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#12063B]/60 via-transparent to-transparent pointer-events-none" />
             </div>
@@ -85,8 +85,7 @@ export const AboutUsSection: React.FC = () => {
             
             {/* Tag / Badge */}
             <div>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
                 <span>About Us</span>
               </div>
             </div>

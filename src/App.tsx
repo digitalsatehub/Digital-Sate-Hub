@@ -163,6 +163,9 @@ export function App() {
         onClose={() => setLegalType(null)}
       />
 
+      {/* Subtle Bottom Page Backdrop Blur Overlay Bar */}
+      <div className="fixed bottom-0 left-0 right-0 h-10 pointer-events-none bg-gradient-to-t from-[#0a0322]/70 via-[#0a0322]/20 to-transparent backdrop-blur-[3px] z-30" />
+
     </div>
   );
 }

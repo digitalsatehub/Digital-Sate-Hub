@@ -33,21 +33,10 @@ export const SocialProofCounters: React.FC = () => {
   ];
 
   return (
-    <section className="bg-white text-slate-900 border-y border-slate-200/80 py-10 sm:py-12 relative overflow-hidden shadow-sm">
+    <section className="bg-white text-slate-900 border-y border-slate-200/80 py-6 sm:py-8 relative overflow-hidden shadow-sm">
       <div className="w-full">
-        
-        {/* Section Title */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-6">
-          <p className="text-xs font-bold uppercase tracking-widest text-[#1817B6]">
-            Trusted Integrations & Digital Ecosystems
-          </p>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
-            Engineered For Industry-Leading Platforms & High-Growth Brands
-          </h2>
-        </div>
-
         {/* Continuous Flow Logo Marquee - Full section width directly on white background */}
-        <div className="relative w-full overflow-hidden py-3">
+        <div className="relative w-full overflow-hidden py-2">
           {/* Gradient Edge Fade Masks */}
           <div className="pointer-events-none absolute inset-y-0 left-0 w-20 sm:w-36 bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
           <div className="pointer-events-none absolute inset-y-0 right-0 w-20 sm:w-36 bg-gradient-to-l from-white via-white/80 to-transparent z-10" />
@@ -69,7 +58,6 @@ export const SocialProofCounters: React.FC = () => {
             ))}
           </div>
         </div>
-
       </div>
     </section>
   );
