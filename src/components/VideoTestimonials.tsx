@@ -124,7 +124,7 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
         </div>
 
         {/* Single Column Stacking Reviews - Lapping directly on top as you scroll */}
-        <div className="space-y-12 sm:space-y-16 relative pb-16">
+        <div className="flex flex-col gap-20 sm:gap-28 relative pb-20">
           {REVIEWS_DATA.map((rev, idx) => {
             // Alternating color design based on image specification:
             // Odd index (0, 2, 4): Dark Blue background (#0B052B)
@@ -132,16 +132,17 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
             const isDarkBlue = idx % 2 === 0;
 
             const cardBgClass = isDarkBlue
-              ? 'bg-[#0B052B] border-indigo-900/80 shadow-black/80'
-              : 'bg-[#1817B6] border-indigo-400/40 shadow-indigo-950/80';
+              ? 'bg-[#0B052B] border-indigo-900/80 shadow-black/90'
+              : 'bg-[#1817B6] border-indigo-400/50 shadow-indigo-950/90';
 
             const innerBoxBgClass = isDarkBlue
               ? 'bg-[#150b3d] border-indigo-900/50'
               : 'bg-[#14139c] border-indigo-400/30';
 
-            // Fixed sticky position so as user scrolls up, each new card comes up and covers the prior card directly on top!
-            // Tiny 12px offset so previous card header stays subtly stacked behind
-            const topOffset = 110 + idx * 12;
+            // Progressive sticky top offset (e.g., 90px + idx * 24px)
+            // This creates the clean deck-stacking effect where each card slides up over the previous one,
+            // leaving a neat 24px top header band visible from the card underneath!
+            const topOffset = 96 + idx * 24;
 
             return (
               <div

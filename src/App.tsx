@@ -142,7 +142,7 @@ export function App() {
       />
 
       {/* Bottom Page Ambient Backdrop Blur Overlay Bar */}
-      <div className="fixed bottom-0 left-0 right-0 h-24 sm:h-36 pointer-events-none bg-gradient-to-t from-[#0a0322]/90 via-[#0a0322]/40 to-transparent backdrop-blur-md z-30" />
+      <div className="fixed bottom-0 left-0 right-0 h-8 sm:h-12 pointer-events-none bg-gradient-to-t from-[#0a0322]/80 via-[#0a0322]/20 to-transparent backdrop-blur-sm z-30" />
 
     </div>
   );
