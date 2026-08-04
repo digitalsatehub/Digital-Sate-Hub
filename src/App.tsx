@@ -73,7 +73,7 @@ export function App() {
             <SocialProofCounters />
 
             {/* 3. About Us Section */}
-            <AboutUsSection />
+            <AboutUsSection onOpenBooking={() => setIsBookingOpen(true)} />
 
             {/* 4. Solution Section (Growth Philosophy & Ecosystems) */}
             <SolutionSection onOpenBooking={() => setIsBookingOpen(true)} />
@@ -163,8 +163,8 @@ export function App() {
         onClose={() => setLegalType(null)}
       />
 
-      {/* Subtle Bottom Page Backdrop Blur Overlay Bar */}
-      <div className="fixed bottom-0 left-0 right-0 h-10 pointer-events-none bg-gradient-to-t from-[#0a0322]/70 via-[#0a0322]/20 to-transparent backdrop-blur-[3px] z-30" />
+      {/* Seamless Bottom Page Ambient Blur Fade Overlay */}
+      <div className="fixed bottom-0 left-0 right-0 h-20 sm:h-28 pointer-events-none bg-gradient-to-t from-[#0a0322]/80 via-[#0a0322]/30 to-transparent backdrop-blur-md [mask-image:linear-gradient(to_top,rgba(0,0,0,1)_0%,rgba(0,0,0,0.4)_50%,rgba(0,0,0,0)_100%)] [-webkit-mask-image:linear-gradient(to_top,rgba(0,0,0,1)_0%,rgba(0,0,0,0.4)_50%,rgba(0,0,0,0)_100%)] z-30" />
 
     </div>
   );

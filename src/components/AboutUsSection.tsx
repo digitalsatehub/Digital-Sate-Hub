@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Layers, Users, Award } from 'lucide-react';
+import { Layers, Users, Award, ArrowRight } from 'lucide-react';
 
 export const STATS = [
   { value: 50, suffix: '+', label: 'Projects Completed', highlight: 'Turnkey Digital Assets', icon: Layers },
@@ -7,7 +7,11 @@ export const STATS = [
   { value: 4, suffix: '+', label: 'Years of Experience', highlight: 'Proven Industry Expertise', icon: Award }
 ];
 
-export const AboutUsSection: React.FC = () => {
+interface AboutUsSectionProps {
+  onOpenBooking?: () => void;
+}
+
+export const AboutUsSection: React.FC<AboutUsSectionProps> = ({ onOpenBooking }) => {
   const [counts, setCounts] = useState<number[]>(STATS.map(() => 0));
   const [hasAnimated, setHasAnimated] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -104,7 +108,7 @@ export const AboutUsSection: React.FC = () => {
             </p>
 
             {/* Stat Counters Under Text */}
-            <div className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="pt-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
               {STATS.map((stat, idx) => {
                 const IconComponent = stat.icon;
                 return (
@@ -131,6 +135,18 @@ export const AboutUsSection: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+
+            {/* CTA Button under project counts */}
+            <div className="pt-2">
+              <button
+                onClick={onOpenBooking}
+                id="about-us-cta"
+                className="px-8 py-3.5 rounded-full font-bold text-base text-white bg-gradient-to-r from-[#1817B6] via-indigo-600 to-indigo-700 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl shadow-indigo-600/40 hover:shadow-indigo-600/60 border border-indigo-300/30 transition-all duration-300 inline-flex items-center justify-center gap-3 group transform hover:-translate-y-0.5"
+              >
+                <span>Let's Work</span>
+                <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1 transition-transform" />
+              </button>
             </div>
 
           </div>
