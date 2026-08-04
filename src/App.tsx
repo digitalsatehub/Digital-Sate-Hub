@@ -10,11 +10,8 @@ import { HeroSection } from './components/HeroSection';
 import { SocialProofCounters } from './components/SocialProofCounters';
 import { AboutUsSection } from './components/AboutUsSection';
 import { SolutionSection } from './components/SolutionSection';
-import { FeaturedServices } from './components/FeaturedServices';
 import { WhyChooseUs } from './components/WhyChooseUs';
-import { PortfolioShowcase } from './components/PortfolioShowcase';
 import { VideoTestimonials } from './components/VideoTestimonials';
-import { IndustriesServed } from './components/IndustriesServed';
 import { FAQSection } from './components/FAQSection';
 import { FinalCTASection } from './components/FinalCTASection';
 
@@ -78,31 +75,16 @@ export function App() {
             {/* 4. Solution Section (Growth Philosophy & Ecosystems) */}
             <SolutionSection onOpenBooking={() => setIsBookingOpen(true)} />
 
-            {/* 5. Featured Services Grid */}
-            <FeaturedServices
-              onNavigate={handleNavigate}
-              onOpenQuote={() => setIsQuoteOpen(true)}
-            />
-
-            {/* 6. Why Choose Us (Differentiators) */}
+            {/* 5. Why Choose Us (Differentiators) */}
             <WhyChooseUs onOpenBooking={() => setIsBookingOpen(true)} />
 
-            {/* 7. Portfolio & Case Studies */}
-            <PortfolioShowcase
-              onNavigate={handleNavigate}
-              onOpenBooking={() => setIsBookingOpen(true)}
-            />
-
-            {/* 8. Video Testimonials */}
+            {/* 6. Video Testimonials */}
             <VideoTestimonials />
 
-            {/* 9. Industries We Serve */}
-            <IndustriesServed onOpenBooking={() => setIsBookingOpen(true)} />
-
-            {/* 10. Frequently Asked Questions */}
+            {/* 7. Frequently Asked Questions */}
             <FAQSection onOpenBooking={() => setIsBookingOpen(true)} />
 
-            {/* 11. Final Call-to-Action */}
+            {/* 8. Final Call-to-Action */}
             <FinalCTASection
               onOpenBooking={() => setIsBookingOpen(true)}
               onOpenQuote={() => setIsQuoteOpen(true)}
@@ -163,8 +145,8 @@ export function App() {
         onClose={() => setLegalType(null)}
       />
 
-      {/* Seamless Bottom Page Ambient Blur Fade Overlay */}
-      <div className="fixed bottom-0 left-0 right-0 h-20 sm:h-28 pointer-events-none bg-gradient-to-t from-[#0a0322]/80 via-[#0a0322]/30 to-transparent backdrop-blur-md [mask-image:linear-gradient(to_top,rgba(0,0,0,1)_0%,rgba(0,0,0,0.4)_50%,rgba(0,0,0,0)_100%)] [-webkit-mask-image:linear-gradient(to_top,rgba(0,0,0,1)_0%,rgba(0,0,0,0.4)_50%,rgba(0,0,0,0)_100%)] z-30" />
+      {/* Subtle Bottom Page Backdrop Blur Overlay Bar */}
+      <div className="fixed bottom-0 left-0 right-0 h-10 pointer-events-none bg-gradient-to-t from-[#0a0322]/70 via-[#0a0322]/20 to-transparent backdrop-blur-[3px] z-30" />
 
     </div>
   );
