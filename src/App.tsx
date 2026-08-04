@@ -9,7 +9,6 @@ import { Footer } from './components/Footer';
 import { HeroSection } from './components/HeroSection';
 import { SocialProofCounters } from './components/SocialProofCounters';
 import { AboutUsSection } from './components/AboutUsSection';
-import { SolutionSection } from './components/SolutionSection';
 import { WhyChooseUs } from './components/WhyChooseUs';
 import { VideoTestimonials } from './components/VideoTestimonials';
 import { FAQSection } from './components/FAQSection';
@@ -72,14 +71,11 @@ export function App() {
             {/* 3. About Us Section */}
             <AboutUsSection onOpenBooking={() => setIsBookingOpen(true)} />
 
-            {/* 4. Solution Section (Growth Philosophy & Ecosystems) */}
-            <SolutionSection onOpenBooking={() => setIsBookingOpen(true)} />
-
-            {/* 5. Why Choose Us (Differentiators) */}
+            {/* 4. Why Choose Us (Differentiators) */}
             <WhyChooseUs onOpenBooking={() => setIsBookingOpen(true)} />
 
-            {/* 6. Video Testimonials */}
-            <VideoTestimonials />
+            {/* 5. Text Reviews (Sticky Stacking Cards) */}
+            <VideoTestimonials onOpenBooking={() => setIsBookingOpen(true)} />
 
             {/* 7. Frequently Asked Questions */}
             <FAQSection onOpenBooking={() => setIsBookingOpen(true)} />
