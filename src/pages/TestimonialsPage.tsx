@@ -40,7 +40,7 @@ export const TestimonialsPage: React.FC<TestimonialsPageProps> = ({ onOpenBookin
       {/* Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-wider">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
           <span>Verified Client Outcomes</span>
         </div>
 

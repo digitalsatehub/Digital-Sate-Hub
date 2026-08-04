@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Calculator, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Calendar, Calculator, ArrowRight, Rocket } from 'lucide-react';
 
 interface FinalCTASectionProps {
   onOpenBooking: () => void;
@@ -20,7 +20,7 @@ export const FinalCTASection: React.FC<FinalCTASectionProps> = ({
         
         {/* Eyebrow */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-indigo-200 text-xs font-bold uppercase tracking-wider mb-6">
-          <Sparkles className="w-4 h-4 text-amber-300" />
+          <Rocket className="w-4 h-4 text-indigo-300" />
           <span>Transform Your Digital Presence</span>
         </div>
 
@@ -35,7 +35,7 @@ export const FinalCTASection: React.FC<FinalCTASectionProps> = ({
         </p>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-xl mx-auto mb-12">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-xl mx-auto">
           <button
             onClick={onOpenBooking}
             id="final-cta-booking-btn"
@@ -54,24 +54,6 @@ export const FinalCTASection: React.FC<FinalCTASectionProps> = ({
             <Calculator className="w-4 h-4 text-indigo-200" />
             <span>Get a Custom Quote</span>
           </button>
-        </div>
-
-        {/* Trust Badges */}
-        <div className="pt-8 border-t border-white/10 flex flex-wrap items-center justify-center gap-6 text-xs text-indigo-200 font-semibold">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>Zero Long-Term Contracts</span>
-          </div>
-          <span>•</span>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>30-Day Post Launch Support</span>
-          </div>
-          <span>•</span>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>Turnkey Systems Delivered On Time</span>
-          </div>
         </div>
 
       </div>

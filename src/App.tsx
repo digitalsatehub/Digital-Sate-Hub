@@ -11,6 +11,7 @@ import { SocialProofCounters } from './components/SocialProofCounters';
 import { AboutUsSection } from './components/AboutUsSection';
 import { WhyChooseUs } from './components/WhyChooseUs';
 import { VideoTestimonials } from './components/VideoTestimonials';
+import { FeaturedPortfolioSection } from './components/FeaturedPortfolioSection';
 import { FAQSection } from './components/FAQSection';
 import { FinalCTASection } from './components/FinalCTASection';
 
@@ -76,6 +77,12 @@ export function App() {
 
             {/* 5. Text Reviews (Sticky Stacking Cards) */}
             <VideoTestimonials onOpenBooking={() => setIsBookingOpen(true)} />
+
+            {/* 6. Featured Portfolio Section */}
+            <FeaturedPortfolioSection
+              onNavigate={handleNavigate}
+              onOpenBooking={() => setIsBookingOpen(true)}
+            />
 
             {/* 7. Frequently Asked Questions */}
             <FAQSection onOpenBooking={() => setIsBookingOpen(true)} />
