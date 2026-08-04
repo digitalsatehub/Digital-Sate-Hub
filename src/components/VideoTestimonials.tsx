@@ -77,19 +77,18 @@ export const REVIEWS_DATA: ReviewItem[] = [
   }
 ];
 
-// Helper Upwork Brand Icon/Logo
-const UpworkLogo: React.FC<{ className?: string }> = ({ className = 'h-5' }) => (
-  <div className={`inline-flex items-center gap-1.5 font-black tracking-tight text-[#14a800] text-lg sm:text-xl font-sans ${className}`}>
-    <span className="bg-[#14a800] text-black font-extrabold text-xs px-1.5 py-0.5 rounded-md text-white">up</span>
-    <span>work</span>
+// Upwork White Logo component matching uploaded image
+const UpworkLogo: React.FC<{ className?: string }> = ({ className = 'h-5 sm:h-6' }) => (
+  <div className={`inline-flex items-center text-white font-extrabold tracking-tighter text-xl sm:text-2xl font-sans ${className}`}>
+    <span>upwork</span>
   </div>
 );
 
-// Helper Fiverr Brand Icon/Logo
-const FiverrLogo: React.FC<{ className?: string }> = ({ className = 'h-5' }) => (
-  <div className={`inline-flex items-center gap-1 font-black tracking-tight text-[#1dbf73] text-lg sm:text-xl font-sans ${className}`}>
-    <span>fiverr</span>
-    <span className="w-1.5 h-1.5 rounded-full bg-[#1dbf73] inline-block ml-0.5 mb-1" />
+// Fiverr White Logo + Green Dot component matching uploaded image
+const FiverrLogo: React.FC<{ className?: string }> = ({ className = 'h-5 sm:h-6' }) => (
+  <div className={`inline-flex items-center text-white font-bold tracking-tight text-xl sm:text-2xl font-sans ${className}`}>
+    <span className="font-extrabold tracking-tighter">fiverr</span>
+    <span className="w-2.5 h-2.5 rounded-full bg-[#1dbf73] inline-block ml-1 self-baseline mb-1" />
   </div>
 );
 
@@ -100,10 +99,10 @@ interface VideoTestimonialsProps {
 export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBooking }) => {
   return (
     <section className="py-20 lg:py-28 bg-[#12063B] text-white relative border-y border-indigo-900/50 overflow-hidden">
-      {/* Background Subtle Ambient Glow */}
+      {/* Background Ambient Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[160px] pointer-events-none" />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
@@ -124,32 +123,33 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
           </p>
         </div>
 
-        {/* Single Column Stacking Reviews - Lapping on scroll */}
-        <div className="space-y-8 sm:space-y-12 relative pb-12">
+        {/* Single Column Stacking Reviews - Lapping directly on top as you scroll */}
+        <div className="space-y-12 sm:space-y-16 relative pb-16">
           {REVIEWS_DATA.map((rev, idx) => {
             // Alternating color design based on image specification:
-            // Odd index (0, 2, 4): Dark Blue background (#0B052B / #0f0838)
-            // Even index (1, 3): Light Blue background (#1817B6 / #2322cc)
+            // Odd index (0, 2, 4): Dark Blue background (#0B052B)
+            // Even index (1, 3): Light Blue background (#1817B6)
             const isDarkBlue = idx % 2 === 0;
 
             const cardBgClass = isDarkBlue
-              ? 'bg-[#0a0424] border-indigo-900/80 shadow-black/80'
+              ? 'bg-[#0B052B] border-indigo-900/80 shadow-black/80'
               : 'bg-[#1817B6] border-indigo-400/40 shadow-indigo-950/80';
 
             const innerBoxBgClass = isDarkBlue
               ? 'bg-[#150b3d] border-indigo-900/50'
               : 'bg-[#14139c] border-indigo-400/30';
 
-            // Progressive sticky top offsets for clean lapping / stacking effect on scroll
-            const topOffset = 100 + idx * 28;
+            // Fixed sticky position so as user scrolls up, each new card comes up and covers the prior card directly on top!
+            // Tiny 12px offset so previous card header stays subtly stacked behind
+            const topOffset = 110 + idx * 12;
 
             return (
               <div
                 key={rev.id}
-                style={{ top: `${topOffset}px` }}
-                className={`sticky rounded-[28px] border p-6 sm:p-9 shadow-2xl transition-all duration-300 group backdrop-blur-xl ${cardBgClass}`}
+                style={{ top: `${topOffset}px`, zIndex: 10 + idx }}
+                className={`sticky rounded-[28px] border p-6 sm:p-9 shadow-2xl transition-all duration-300 group backdrop-blur-2xl ${cardBgClass}`}
               >
-                {/* Top Bar: Platform Logo + Category Tags (Left) and 5 Stars (Right) */}
+                {/* Top Bar: Platform Logo + Category Tags (Left) and 5 White Stars (Right) */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-2">
                   <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-medium text-gray-300">
                     {rev.platform === 'upwork' ? (
@@ -157,11 +157,11 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
                     ) : (
                       <FiverrLogo />
                     )}
-                    <span className="hidden sm:inline text-gray-500">•</span>
+                    <span className="hidden sm:inline text-gray-400">•</span>
                     <span className="text-gray-200 font-semibold tracking-wide">{rev.categoryTags}</span>
                   </div>
 
-                  {/* 5 White/Amber Stars top right */}
+                  {/* 5 White Stars top right */}
                   <div className="flex items-center gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="w-4 sm:w-5 h-4 sm:h-5 fill-current text-white" />
@@ -179,21 +179,21 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
                   {/* Client Name & Verified Tag */}
                   <div className="flex items-center gap-2 text-sm sm:text-base">
                     <span className="font-bold text-white">{rev.clientName}</span>
-                    <span className="text-gray-400 text-xs font-normal">• {rev.verifiedLabel}</span>
+                    <span className="text-gray-300 text-xs font-normal">• {rev.verifiedLabel}</span>
                   </div>
                 </div>
 
                 {/* Bottom Row Metrics: 5.0 Rating | Fast Speed | 100% Success */}
                 <div className="grid grid-cols-3 gap-4 pt-2 border-t border-white/10 items-center">
                   
-                  {/* Metric 1: Rating */}
+                  {/* Metric 1: Rating with GOLDEN STARS */}
                   <div>
                     <div className="text-2xl sm:text-3xl font-black italic tracking-tight text-white">
                       {rev.ratingValue}
                     </div>
                     <div className="flex items-center gap-0.5 mt-1">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="w-3.5 sm:w-4 h-3.5 sm:h-4 fill-current text-rose-500" />
+                        <Star key={i} className="w-3.5 sm:w-4 h-3.5 sm:h-4 fill-current text-amber-400" />
                       ))}
                     </div>
                   </div>
@@ -226,7 +226,7 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
         </div>
 
         {/* Optional Call To Action at Bottom of Reviews */}
-        <div className="mt-16 text-center">
+        <div className="mt-20 text-center">
           <button
             onClick={onOpenBooking}
             id="reviews-cta-button"
