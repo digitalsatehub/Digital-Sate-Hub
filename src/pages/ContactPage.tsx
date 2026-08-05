@@ -1,16 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { InteractiveBoxGrid } from '../components/InteractiveBoxGrid';
+import { VideoTestimonials } from '../components/VideoTestimonials';
 import {
   Mail,
-  Phone,
-  MapPin,
   Calendar,
   Calculator,
   Send,
   CheckCircle2,
   Sparkles,
-  Bot,
-  Globe
+  ArrowRight,
+  Clock,
+  Globe2
 } from 'lucide-react';
 
 interface ContactPageProps {
@@ -66,78 +66,104 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onOpenBooking, onOpenQ
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5 relative z-10">
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-tight">
-            Contact{' '}
+            Get In Touch & Start Your{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-blue-400 to-indigo-200">
-              Digital Sate Hub
+              Growth Journey
             </span>
           </h1>
 
           <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed font-medium">
-            Ready to turn more visitors into paying customers? Reach out directly, request a custom quote, or book a free 1-on-1 strategy session.
+            Ready to turn more visitors into paying customers? Send us a message, request a custom quote, or book a free 1-on-1 strategy session.
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10">
+      {/* Main Grid: Left Side Clean Descriptive Text & Fast Action Buttons, Right Side Inquiry Form */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         
-        {/* Left Side: Direct Details & Quick Action Modals */}
-        <div className="lg:col-span-5 space-y-6">
+        {/* Left Side: Pure Descriptive Text & Collaboration Details (Replaces old Direct Contact Channels block) */}
+        <div className="lg:col-span-5 space-y-8">
           
-          <div className="bg-white/5 border border-indigo-500/20 rounded-3xl p-6 sm:p-8 space-y-6 backdrop-blur-md">
-            <h2 className="text-xl font-bold text-white border-b border-indigo-800/40 pb-3">
-              Direct Contact Channels
+          <div className="space-y-5">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Let's Build Together</span>
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight">
+              We’re Here to Build Your High-Converting System
             </h2>
 
-            <div className="space-y-4 text-xs">
-              <a
-                href="mailto:digitalsatehub@gmail.com"
-                className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-indigo-400 transition-all"
-              >
-                <div className="p-2.5 rounded-lg bg-[#1817B6] text-white shrink-0">
-                  <Mail className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="font-bold text-gray-300 block">Primary Business Email</span>
-                  <span className="text-sm font-extrabold text-white">digitalsatehub@gmail.com</span>
-                  <span className="text-[10px] text-emerald-400 block mt-0.5">Average Response Time: &lt; 2 Hours</span>
-                </div>
-              </a>
+            <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-normal">
+              Whether you need a full turnkey digital growth architecture, a bespoke sales funnel, a GoHighLevel CRM setup, or automated lead workflows, Digital Sate Hub is ready to partner with you.
+            </p>
 
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
-                <div className="p-2.5 rounded-lg bg-[#1817B6] text-white shrink-0">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="font-bold text-gray-300 block">Digital Studio Headquarters</span>
-                  <span className="text-sm font-bold text-white">Global Remote Client Services</span>
-                  <span className="text-[10px] text-gray-400 block mt-0.5">Serving clients worldwide across USA, UK, Canada & Australia</span>
-                </div>
+            <p className="text-sm text-gray-400 leading-relaxed">
+              We work directly with founders, agency owners, and business leaders worldwide across the USA, UK, Canada, and Australia to turn complex automation into high-performing revenue channels.
+            </p>
+          </div>
+
+          {/* Quick Highlight Cards in Prose Style */}
+          <div className="space-y-4 pt-2">
+            <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-white/5 border border-indigo-500/20 backdrop-blur-md">
+              <div className="p-2.5 rounded-xl bg-[#1817B6] text-white shrink-0 mt-0.5">
+                <Clock className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white">Rapid Response Time</h3>
+                <p className="text-xs text-gray-300 mt-0.5">
+                  Our senior strategy leads analyze incoming inquiries and reply with detailed project insights within 2 hours guarantee.
+                </p>
               </div>
             </div>
 
-            {/* Quick Action Box */}
-            <div className="pt-4 border-t border-indigo-800/40 space-y-3">
-              <h3 className="text-xs font-bold uppercase text-indigo-300">
-                Prefer Fast Instant Actions?
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  onClick={onOpenBooking}
-                  className="p-3 rounded-xl bg-[#1817B6] hover:bg-indigo-600 font-bold text-xs text-white transition-all flex items-center justify-center gap-1.5 shadow-md"
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>Book Calendar</span>
-                </button>
-
-                <button
-                  onClick={onOpenQuote}
-                  className="p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 font-bold text-xs text-indigo-200 transition-all flex items-center justify-center gap-1.5"
-                >
-                  <Calculator className="w-4 h-4" />
-                  <span>AI Scope Builder</span>
-                </button>
+            <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-white/5 border border-indigo-500/20 backdrop-blur-md">
+              <div className="p-2.5 rounded-xl bg-[#1817B6] text-white shrink-0 mt-0.5">
+                <Mail className="w-5 h-5" />
               </div>
+              <div>
+                <h3 className="text-sm font-bold text-white">Direct Email Access</h3>
+                <p className="text-xs text-indigo-300 font-extrabold mt-0.5">
+                  digitalsatehub@gmail.com
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-white/5 border border-indigo-500/20 backdrop-blur-md">
+              <div className="p-2.5 rounded-xl bg-[#1817B6] text-white shrink-0 mt-0.5">
+                <Globe2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white">Global Remote Studio</h3>
+                <p className="text-xs text-gray-300 mt-0.5">
+                  Full asynchronous & live video consultations available across all major global timezones.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Instant Action CTA Buttons */}
+          <div className="pt-2 space-y-3">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-300">
+              Prefer Fast Instant Booking?
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                onClick={onOpenBooking}
+                className="p-3.5 rounded-xl bg-[#1817B6] hover:bg-indigo-600 font-bold text-xs text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 border border-indigo-400/30"
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Book 1-on-1 Call</span>
+              </button>
+
+              <button
+                onClick={onOpenQuote}
+                className="p-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 font-bold text-xs text-indigo-200 transition-all flex items-center justify-center gap-2"
+              >
+                <Calculator className="w-4 h-4" />
+                <span>AI Scope Builder</span>
+              </button>
             </div>
           </div>
 
@@ -145,7 +171,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onOpenBooking, onOpenQ
 
         {/* Right Side: Detailed Inquiry Form */}
         <div className="lg:col-span-7">
-          <div className="bg-white/5 border border-indigo-500/20 rounded-3xl p-6 sm:p-8 backdrop-blur-md">
+          <div className="bg-white/5 border border-indigo-500/20 rounded-3xl p-6 sm:p-8 backdrop-blur-md shadow-2xl">
             
             <div className="mb-6">
               <h2 className="text-2xl font-black text-white mb-1">
@@ -180,7 +206,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onOpenBooking, onOpenQ
                     <input
                       type="email"
                       required
-                      placeholder="marcus@vanguard.com"
+                      placeholder="marcus@company.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       className="w-full bg-white/5 border border-indigo-500/30 rounded-xl py-2.5 px-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-400"
@@ -191,11 +217,10 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onOpenBooking, onOpenQ
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-300 mb-1">
-                      Phone Number *
+                      Phone / WhatsApp Number
                     </label>
                     <input
                       type="tel"
-                      required
                       placeholder="+1 (555) 000-0000"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -252,7 +277,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onOpenBooking, onOpenQ
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 px-6 rounded-2xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-[#1817B6] to-indigo-600 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-6 rounded-2xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-[#1817B6] to-indigo-600 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl border border-indigo-400/30 transition-all flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <span>Sending Message...</span>
@@ -291,6 +316,10 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onOpenBooking, onOpenQ
         </div>
 
       </div>
+
+      {/* Reviews Section - Continuous left-to-right scrolling marquee at the very end before footer */}
+      <VideoTestimonials variant="marquee" onOpenBooking={onOpenBooking} />
+
     </div>
   );
 };

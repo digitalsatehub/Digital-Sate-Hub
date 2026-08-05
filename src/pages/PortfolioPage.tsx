@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { PORTFOLIO_PROJECTS } from '../data/siteData';
 import { InteractiveBoxGrid } from '../components/InteractiveBoxGrid';
+import { PortraitVideoTestimonial } from '../components/PortraitVideoTestimonial';
 import { VideoTestimonials } from '../components/VideoTestimonials';
 import { NavigationPage } from '../types';
 import { motion } from 'motion/react';
@@ -80,7 +81,10 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({ onOpenBooking }) =
         </div>
       </div>
 
-      {/* Reviews Section - Continuous left-to-right scrolling marquee, pauses on hover */}
+      {/* Single Portrait Video Testimonial */}
+      <PortraitVideoTestimonial onOpenBooking={onOpenBooking} />
+
+      {/* Reviews Section - Continuous left-to-right scrolling marquee at the very end before footer */}
       <VideoTestimonials variant="marquee" onOpenBooking={onOpenBooking} />
 
     </div>
