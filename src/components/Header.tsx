@@ -43,14 +43,35 @@ export const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  const navItems: { label: string; page: NavigationPage }[] = [
+  const navItems: { label: string; page: string }[] = [
     { label: 'Home', page: 'home' },
     { label: 'Services', page: 'services' },
     { label: 'Portfolio', page: 'portfolio' },
-    { label: 'Testimonials', page: 'testimonials' },
     { label: 'Blog', page: 'blog' },
     { label: 'Contact Us', page: 'contact' }
   ];
+
+  const handleNavClick = (page: string) => {
+    if (page === 'services') {
+      if (currentPage === 'home') {
+        const servicesEl = document.getElementById('services');
+        if (servicesEl) {
+          servicesEl.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        onNavigate('home');
+        setTimeout(() => {
+          const servicesEl = document.getElementById('services');
+          if (servicesEl) {
+            servicesEl.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 150);
+      }
+    } else {
+      onNavigate(page as NavigationPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   return (
     <header className="fixed top-4 inset-x-0 z-50 flex flex-col items-center justify-center px-4 pointer-events-none">
@@ -102,10 +123,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   key={item.page}
                   id={`nav-item-${item.page}`}
-                  onClick={() => {
-                    onNavigate(item.page);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
+                  onClick={() => handleNavClick(item.page)}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
                     isActive
                       ? 'bg-[#1817B6] text-white shadow-md shadow-indigo-600/40 font-bold'
@@ -146,9 +164,8 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   key={item.page}
                   onClick={() => {
-                    onNavigate(item.page);
+                    handleNavClick(item.page);
                     setMobileMenuOpen(false);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   className={`p-2.5 rounded-xl text-left text-xs font-semibold transition-all ${
                     isActive

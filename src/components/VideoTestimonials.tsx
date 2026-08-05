@@ -171,9 +171,9 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
                 </div>
 
                 {/* Inner Quote Box Container */}
-                <div className={`rounded-2xl border p-6 sm:p-8 mb-6 ${innerBoxBgClass}`}>
+                <div className={`rounded-2xl border p-5 sm:p-7 mb-5 ${innerBoxBgClass}`}>
                   {/* Large Quote */}
-                  <p className="text-lg sm:text-2xl font-medium tracking-tight text-white leading-snug mb-6">
+                  <p className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-snug mb-4">
                     {rev.quote}
                   </p>
 

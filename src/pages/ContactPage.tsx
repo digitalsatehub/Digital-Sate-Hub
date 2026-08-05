@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { InteractiveBoxGrid } from '../components/InteractiveBoxGrid';
 import {
   Mail,
   Phone,
@@ -18,6 +19,7 @@ interface ContactPageProps {
 }
 
 export const ContactPage: React.FC<ContactPageProps> = ({ onOpenBooking, onOpenQuote }) => {
+  const heroRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -52,20 +54,28 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onOpenBooking, onOpenQ
   return (
     <div className="bg-[#12063B] text-white min-h-screen pt-12 pb-24 space-y-16">
       
-      {/* Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-wider">
-          <Mail className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Let's Build Your System</span>
+      {/* Page Hero Header with Interactive Box Grid Animation & Ambient Glows */}
+      <div ref={heroRef} className="relative overflow-hidden pt-28 pb-24 sm:pt-36 sm:pb-32 text-center">
+        {/* Interactive Box Grid Canvas */}
+        <InteractiveBoxGrid containerRef={heroRef} />
+
+        {/* Animated Background Moving Glows */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[500px] bg-indigo-600/20 rounded-full blur-[180px] pointer-events-none animate-pulse z-0" />
+        <div className="absolute top-0 right-10 w-96 h-96 bg-blue-600/25 rounded-full blur-[150px] pointer-events-none z-0" />
+        <div className="absolute bottom-0 left-10 w-80 h-80 bg-purple-600/20 rounded-full blur-[140px] pointer-events-none z-0" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5 relative z-10">
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-tight">
+            Contact{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-blue-400 to-indigo-200">
+              Digital Sate Hub
+            </span>
+          </h1>
+
+          <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed font-medium">
+            Ready to turn more visitors into paying customers? Reach out directly, request a custom quote, or book a free 1-on-1 strategy session.
+          </p>
         </div>
-
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white">
-          Contact Digital Sate Hub
-        </h1>
-
-        <p className="text-base sm:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-          Ready to turn more visitors into paying customers? Reach out directly, request a custom quote, or book a free 1-on-1 strategy session.
-        </p>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10">

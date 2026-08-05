@@ -1,106 +1,87 @@
-import React, { useState } from 'react';
-import { PortfolioShowcase } from '../components/PortfolioShowcase';
-import { TestimonialMarquee } from '../components/TestimonialMarquee';
-import { Layers } from 'lucide-react';
+import React, { useRef } from 'react';
+import { PORTFOLIO_PROJECTS } from '../data/siteData';
+import { InteractiveBoxGrid } from '../components/InteractiveBoxGrid';
+import { VideoTestimonials } from '../components/VideoTestimonials';
+import { NavigationPage } from '../types';
+import { motion } from 'motion/react';
 
 interface PortfolioPageProps {
   onOpenBooking: () => void;
+  onNavigate: (page: NavigationPage) => void;
 }
 
 export const PortfolioPage: React.FC<PortfolioPageProps> = ({ onOpenBooking }) => {
-  // Before and After interactive comparison slider state
-  const [sliderPos, setSliderPos] = useState(50);
+  const heroRef = useRef<HTMLDivElement>(null);
+  
+  // Select top 8 projects for 2-column grid layout (4 rows of 2 columns)
+  const displayProjects = PORTFOLIO_PROJECTS.slice(0, 8);
 
   return (
     <div className="bg-[#12063B] text-white min-h-screen pt-12 pb-24 space-y-16">
       
-      {/* Page Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-wider">
-          <Layers className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Proven System Proof</span>
-        </div>
+      {/* Page Hero Header with Interactive Box Grid Animation & Ambient Glows */}
+      <div ref={heroRef} className="relative overflow-hidden pt-28 pb-24 sm:pt-36 sm:pb-32 text-center">
+        {/* Interactive Box Grid Canvas (Same mouse-reactive light effect as Home Hero) */}
+        <InteractiveBoxGrid containerRef={heroRef} />
 
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white">
-          Our Portfolio &{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-blue-400 to-indigo-200">
-            Case Studies
-          </span>
-        </h1>
+        {/* Animated Background Moving Glows */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[500px] bg-indigo-600/20 rounded-full blur-[180px] pointer-events-none animate-pulse z-0" />
+        <div className="absolute top-0 right-10 w-96 h-96 bg-blue-600/25 rounded-full blur-[150px] pointer-events-none z-0" />
+        <div className="absolute bottom-0 left-10 w-80 h-80 bg-purple-600/20 rounded-full blur-[140px] pointer-events-none z-0" />
 
-        <p className="text-base sm:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-          Visual mockups, sales funnel layouts, mobile responsive interfaces, and GoHighLevel CRM dashboards built for businesses that demand revenue growth.
-        </p>
-      </div>
-
-      {/* Interactive Before & After Transformation Slider */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-slate-950 border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl">
-          <div className="text-center max-w-xl mx-auto mb-6 space-y-1">
-            <span className="text-xs font-bold uppercase text-amber-300 tracking-wider">
-              Interactive System Overhaul
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
+          <motion.h1
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-tight"
+          >
+            Our Portfolio &{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-blue-400 to-indigo-200">
+              Case Studies
             </span>
-            <h2 className="text-xl sm:text-2xl font-black text-white">
-              Before & After Conversion Overhaul
-            </h2>
-            <p className="text-xs text-gray-400">
-              Drag the slider below to see how we transform clunky static sites into high-converting sales engines.
-            </p>
-          </div>
+          </motion.h1>
 
-          <div className="relative aspect-[16/9] rounded-2xl overflow-hidden border border-indigo-500/30 select-none">
-            {/* Before Image (Old Static Site) */}
-            <img
-              src="https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1200&q=80"
-              alt="Before - Static Site"
-              className="absolute inset-0 w-full h-full object-cover filter grayscale contrast-125 brightness-75"
-            />
-            <div className="absolute top-4 left-4 bg-black/80 px-3 py-1 rounded-full text-xs font-bold text-rose-400 border border-rose-500/30">
-              BEFORE: 1.2% Conv Rate
-            </div>
-
-            {/* After Image (Overlaid with clip-path) */}
-            <div
-              className="absolute inset-0 overflow-hidden"
-              style={{ clipPath: `polygon(${sliderPos}% 0, 100% 0, 100% 100%, ${sliderPos}% 100%)` }}
-            >
-              <img
-                src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=80"
-                alt="After - High Converting System"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-4 right-4 bg-[#1817B6] px-3 py-1 rounded-full text-xs font-bold text-emerald-300 border border-emerald-400/40">
-                AFTER: 4.8% Conv Rate (+300% Lift)
-              </div>
-            </div>
-
-            {/* Slider Handle Divider Line */}
-            <div
-              className="absolute top-0 bottom-0 w-1 bg-amber-400 shadow-2xl cursor-ew-resize z-20"
-              style={{ left: `${sliderPos}%` }}
-            >
-              <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center shadow-lg border-2 border-white">
-                ↔
-              </div>
-            </div>
-
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={sliderPos}
-              onChange={(e) => setSliderPos(Number(e.target.value))}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-30"
-            />
-          </div>
+          <motion.p
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed font-medium"
+          >
+            Visual mockups, sales funnel layouts, mobile responsive interfaces, and GoHighLevel CRM dashboards built for businesses that demand revenue growth.
+          </motion.p>
         </div>
       </div>
 
-      {/* Testimonial Marquee (Left to Right, Pauses on Hover) */}
-      <TestimonialMarquee />
+      {/* 8 Portfolio Mockup Grid - Exactly 2 Columns on Medium/Large Screens */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
+          {displayProjects.map((project, index) => (
+            <motion.div
+              key={project.id}
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ duration: 0.5, delay: index * 0.08, ease: 'easeOut' }}
+              className="bg-[#0b0526] border border-indigo-500/30 hover:border-indigo-400/80 rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-2 shadow-2xl group relative"
+            >
+              {/* Pure Mockup Image - Absolutely NO text overlay on columns */}
+              <div className="relative aspect-[4/3] sm:aspect-[16/11] overflow-hidden bg-slate-900">
+                <img
+                  src={project.imageUrl}
+                  alt={project.title}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                  loading="lazy"
+                />
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
 
-      {/* Main Full Portfolio Showcase Gallery */}
-      <PortfolioShowcase onOpenBooking={onOpenBooking} isFullPage={true} />
+      {/* Reviews Section - Designed exactly the way it is on the Home page (Sticky Stacking Cards) */}
+      <VideoTestimonials onOpenBooking={onOpenBooking} />
 
     </div>
   );

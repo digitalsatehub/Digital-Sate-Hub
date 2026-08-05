@@ -17,9 +17,7 @@ import { FAQSection } from './components/FAQSection';
 import { FinalCTASection } from './components/FinalCTASection';
 
 // Subpages
-import { ServicesPage } from './pages/ServicesPage';
 import { PortfolioPage } from './pages/PortfolioPage';
-import { TestimonialsPage } from './pages/TestimonialsPage';
 import { BlogPage } from './pages/BlogPage';
 import { ContactPage } from './pages/ContactPage';
 
@@ -28,7 +26,7 @@ import { BookingModal } from './components/BookingModal';
 import { QuoteBuilderModal } from './components/QuoteBuilderModal';
 import { LegalModals } from './components/LegalModals';
 
-export function App() {
+export default function App() {
   const [currentPage, setCurrentPage] = useState<NavigationPage>('home');
 
   // Modal controls
@@ -73,13 +71,13 @@ export function App() {
             {/* 3. About Us Section */}
             <AboutUsSection onOpenBooking={() => setIsBookingOpen(true)} />
 
-            {/* 4. Why Choose Us (Differentiators) */}
+            {/* 4. Services Grid (Arranged in clean Why Choose Us layout) */}
             <WhyChooseUs onOpenBooking={() => setIsBookingOpen(true)} />
 
             {/* 5. Text Reviews (Sticky Stacking Cards) */}
             <VideoTestimonials onOpenBooking={() => setIsBookingOpen(true)} />
 
-            {/* 6. Featured Portfolio Section */}
+            {/* 6. Featured Portfolio Section (Pure Image Mockups) */}
             <FeaturedPortfolioSection
               onNavigate={handleNavigate}
               onOpenBooking={() => setIsBookingOpen(true)}
@@ -90,31 +88,19 @@ export function App() {
 
             {/* 8. Frequently Asked Questions */}
             <FAQSection onOpenBooking={() => setIsBookingOpen(true)} />
-
-            {/* 9. Final Call-to-Action */}
-            <FinalCTASection
-              onOpenBooking={() => setIsBookingOpen(true)}
-              onOpenQuote={() => setIsQuoteOpen(true)}
-            />
           </>
         )}
 
-        {currentPage === 'services' && (
-          <ServicesPage
+        {currentPage === 'portfolio' && (
+          <PortfolioPage
             onOpenBooking={() => setIsBookingOpen(true)}
-            onOpenQuote={() => setIsQuoteOpen(true)}
+            onNavigate={handleNavigate}
           />
         )}
 
-        {currentPage === 'portfolio' && (
-          <PortfolioPage onOpenBooking={() => setIsBookingOpen(true)} />
+        {currentPage === 'blog' && (
+          <BlogPage onOpenBooking={() => setIsBookingOpen(true)} />
         )}
-
-        {currentPage === 'testimonials' && (
-          <TestimonialsPage onOpenBooking={() => setIsBookingOpen(true)} />
-        )}
-
-        {currentPage === 'blog' && <BlogPage />}
 
         {currentPage === 'contact' && (
           <ContactPage
@@ -123,6 +109,14 @@ export function App() {
           />
         )}
       </main>
+
+      {/* Final Call-to-Action (rendered on every page EXCEPT Contact) */}
+      {currentPage !== 'contact' && (
+        <FinalCTASection
+          onOpenBooking={() => setIsBookingOpen(true)}
+          onOpenQuote={() => setIsQuoteOpen(true)}
+        />
+      )}
 
       {/* Persistent Footer */}
       <Footer
@@ -141,22 +135,12 @@ export function App() {
       <QuoteBuilderModal
         isOpen={isQuoteOpen}
         onClose={() => setIsQuoteOpen(false)}
-        onOpenBooking={() => {
-          setIsQuoteOpen(false);
-          setIsBookingOpen(true);
-        }}
       />
 
       <LegalModals
         type={legalType}
         onClose={() => setLegalType(null)}
       />
-
-      {/* Bottom Page Ambient Backdrop Blur Overlay Bar */}
-      <div className="fixed bottom-0 left-0 right-0 h-8 sm:h-12 pointer-events-none bg-gradient-to-t from-[#0a0322]/80 via-[#0a0322]/20 to-transparent backdrop-blur-sm z-30" />
-
     </div>
   );
 }
-
-export default App;

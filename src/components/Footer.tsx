@@ -29,7 +29,7 @@ export const Footer: React.FC<FooterProps> = ({
       <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-4/5 h-32 bg-indigo-500/15 rounded-full blur-[70px] pointer-events-none" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-indigo-900/40">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pb-12 border-b border-indigo-900/40">
           
           {/* Col 1: Company Overview */}
           <div className="space-y-4">
@@ -56,35 +56,7 @@ export const Footer: React.FC<FooterProps> = ({
             </p>
           </div>
 
-          {/* Col 2: Services */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white">
-              Services
-            </h3>
-            <ul className="space-y-2 text-xs">
-              {[
-                { label: 'Website Design', page: 'services' },
-                { label: 'Sales Funnels', page: 'services' },
-                { label: 'Landing Pages', page: 'services' },
-                { label: 'CRM Optimization', page: 'services' },
-                { label: 'Marketing Automation', page: 'services' },
-                { label: 'Email Sequences', page: 'services' },
-                { label: 'AI Automation', page: 'services' },
-                { label: 'Conversion (CRO)', page: 'services' }
-              ].map((s) => (
-                <li key={s.label}>
-                  <button
-                    onClick={() => onNavigate(s.page as NavigationPage)}
-                    className="hover:text-indigo-300 transition-colors text-left"
-                  >
-                    {s.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Col 3: Pages (Replaced Industries & Work) */}
+          {/* Col 2: Pages */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
               Pages
@@ -94,13 +66,22 @@ export const Footer: React.FC<FooterProps> = ({
                 { label: 'Home', page: 'home' },
                 { label: 'Services', page: 'services' },
                 { label: 'Portfolio', page: 'portfolio' },
-                { label: 'Testimonials', page: 'testimonials' },
                 { label: 'Blog', page: 'blog' },
                 { label: 'Contact', page: 'contact' }
               ].map((item) => (
                 <li key={item.label}>
                   <button
-                    onClick={() => onNavigate(item.page as NavigationPage)}
+                    onClick={() => {
+                      if (item.page === 'services') {
+                        onNavigate('home');
+                        setTimeout(() => {
+                          document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
+                        }, 150);
+                      } else {
+                        onNavigate(item.page as NavigationPage);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
+                    }}
                     className="hover:text-indigo-300 transition-colors text-left font-medium"
                   >
                     {item.label}
@@ -110,7 +91,7 @@ export const Footer: React.FC<FooterProps> = ({
             </ul>
           </div>
 
-          {/* Col 4: Contact & Support (With Social Media Icons, No Button) */}
+          {/* Col 3: Contact & Support (With Social Media Icons, No Button) */}
           <div className="space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
               Contact & Support

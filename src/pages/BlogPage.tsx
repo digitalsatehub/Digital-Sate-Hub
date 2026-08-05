@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { BLOG_POSTS } from '../data/siteData';
 import { BlogPost } from '../types';
+import { InteractiveBoxGrid } from '../components/InteractiveBoxGrid';
 import {
   Search,
   Clock,
@@ -9,10 +10,19 @@ import {
   ArrowRight,
   X,
   Sparkles,
-  BookOpen
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  HelpCircle
 } from 'lucide-react';
+import { motion } from 'motion/react';
 
-export const BlogPage: React.FC = () => {
+interface BlogPageProps {
+  onOpenBooking?: () => void;
+}
+
+export const BlogPage: React.FC<BlogPageProps> = ({ onOpenBooking }) => {
+  const heroRef = useRef<HTMLDivElement>(null);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('All');
@@ -30,26 +40,48 @@ export const BlogPage: React.FC = () => {
     return matchesSearch && matchesTag;
   });
 
+  // Calculate current post index for Previous/Next post navigation
+  const currentPostIndex = selectedPost
+    ? BLOG_POSTS.findIndex((p) => p.id === selectedPost.id)
+    : -1;
+
+  const handlePrevPost = () => {
+    if (currentPostIndex === -1) return;
+    const prevIdx = (currentPostIndex - 1 + BLOG_POSTS.length) % BLOG_POSTS.length;
+    setSelectedPost(BLOG_POSTS[prevIdx]);
+  };
+
+  const handleNextPost = () => {
+    if (currentPostIndex === -1) return;
+    const nextIdx = (currentPostIndex + 1) % BLOG_POSTS.length;
+    setSelectedPost(BLOG_POSTS[nextIdx]);
+  };
+
   return (
     <div className="bg-[#12063B] text-white min-h-screen pt-12 pb-24 space-y-12">
       
-      {/* Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-wider">
-          <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Conversion & Automation Insights</span>
+      {/* Page Hero Header with Interactive Box Grid Animation & Ambient Glows */}
+      <div ref={heroRef} className="relative overflow-hidden pt-28 pb-24 sm:pt-36 sm:pb-32 text-center">
+        {/* Interactive Box Grid Canvas */}
+        <InteractiveBoxGrid containerRef={heroRef} />
+
+        {/* Animated Background Moving Glows */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[500px] bg-indigo-600/20 rounded-full blur-[180px] pointer-events-none animate-pulse z-0" />
+        <div className="absolute top-0 right-10 w-96 h-96 bg-blue-600/25 rounded-full blur-[150px] pointer-events-none z-0" />
+        <div className="absolute bottom-0 left-10 w-80 h-80 bg-purple-600/20 rounded-full blur-[140px] pointer-events-none z-0" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5 relative z-10">
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-tight">
+            Digital Sate Hub{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-blue-400 to-indigo-200">
+              Growth Blog
+            </span>
+          </h1>
+
+          <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed font-medium">
+            Actionable guides on sales funnel copywriting, GoHighLevel pipeline setups, AI lead agents, and conversion rate optimization.
+          </p>
         </div>
-
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white">
-          Digital Sate Hub{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-blue-400 to-indigo-200">
-            Growth Blog
-          </span>
-        </h1>
-
-        <p className="text-base sm:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-          Actionable guides on sales funnel copywriting, GoHighLevel pipeline setups, AI lead agents, and conversion rate optimization.
-        </p>
       </div>
 
       {/* Search & Tag Filters */}
@@ -134,18 +166,75 @@ export const BlogPage: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* Want to Know More Section */}
+        <div className="mt-16 text-center bg-gradient-to-r from-indigo-950/60 via-[#140845] to-indigo-950/60 border border-indigo-500/30 rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10 space-y-4 max-w-2xl mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600/30 border border-indigo-400/30 flex items-center justify-center mx-auto text-indigo-300">
+              <HelpCircle className="w-6 h-6 text-indigo-300" />
+            </div>
+
+            <h3 className="text-2xl sm:text-3xl font-black text-white">
+              Want to Know More About Scaling Your Revenue?
+            </h3>
+
+            <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
+              Book a 1-on-1 strategic growth session with our funnel & automation specialists. We’ll analyze your lead generation architecture and map out a custom growth system.
+            </p>
+
+            <div className="pt-2">
+              <button
+                onClick={onOpenBooking}
+                className="px-8 py-4 rounded-2xl font-extrabold text-sm text-white bg-gradient-to-r from-[#1817B6] to-indigo-600 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl shadow-indigo-600/40 border border-indigo-400/40 transition-all inline-flex items-center gap-2 group"
+              >
+                <span>Want to Know More</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Full Article Reader Modal */}
       {selectedPost && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-[#12063B] border border-indigo-500/40 rounded-3xl max-w-3xl w-full p-6 sm:p-8 text-white relative shadow-2xl max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setSelectedPost(null)}
-              className="absolute top-4 right-4 p-2 rounded-xl bg-white/10 text-gray-300 hover:text-white hover:bg-white/20 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            
+            {/* Modal Navigation Top Header */}
+            <div className="flex items-center justify-between border-b border-indigo-900/50 pb-4 mb-6">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrevPost}
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-bold text-white transition-all flex items-center gap-1.5 group"
+                  title="Previous Article"
+                >
+                  <ChevronLeft className="w-4 h-4 text-indigo-300 group-hover:-translate-x-0.5 transition-transform" />
+                  <span className="hidden sm:inline">Previous Article</span>
+                </button>
+
+                <button
+                  onClick={handleNextPost}
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-bold text-white transition-all flex items-center gap-1.5 group"
+                  title="Next Article"
+                >
+                  <span className="hidden sm:inline">Next Article</span>
+                  <ChevronRight className="w-4 h-4 text-indigo-300 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
+
+              <div className="text-[11px] font-semibold text-indigo-300">
+                Post {currentPostIndex + 1} of {BLOG_POSTS.length}
+              </div>
+
+              <button
+                onClick={() => setSelectedPost(null)}
+                className="p-2 rounded-xl bg-white/10 text-gray-300 hover:text-white hover:bg-white/20 transition-colors"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
             <div className="flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2">
               <span>{selectedPost.category}</span>
@@ -169,12 +258,13 @@ export const BlogPage: React.FC = () => {
               {selectedPost.content}
             </div>
 
-            <div className="pt-4 border-t border-indigo-900/50 flex items-center justify-between text-xs">
+            {/* Modal Bottom Bar with Previous/Next Controls */}
+            <div className="pt-6 border-t border-indigo-900/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
               <div className="flex items-center gap-2">
                 <img
                   src={selectedPost.author.avatar}
                   alt={selectedPost.author.name}
-                  className="w-8 h-8 rounded-full object-cover"
+                  className="w-8 h-8 rounded-full object-cover border border-indigo-400/30"
                 />
                 <div>
                   <div className="font-bold text-white">{selectedPost.author.name}</div>
@@ -182,12 +272,30 @@ export const BlogPage: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                onClick={() => setSelectedPost(null)}
-                className="px-4 py-2 rounded-xl font-bold text-xs text-white bg-[#1817B6] hover:bg-indigo-600 transition-all"
-              >
-                Close Article
-              </button>
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                <button
+                  onClick={handlePrevPost}
+                  className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 font-bold text-xs text-white transition-all flex items-center gap-1 group"
+                >
+                  <ChevronLeft className="w-4 h-4 text-indigo-300 group-hover:-translate-x-0.5 transition-transform" />
+                  <span>Prev</span>
+                </button>
+
+                <button
+                  onClick={handleNextPost}
+                  className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 font-bold text-xs text-white transition-all flex items-center gap-1 group"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4 text-indigo-300 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+
+                <button
+                  onClick={() => setSelectedPost(null)}
+                  className="px-4 py-2 rounded-xl font-bold text-xs text-white bg-[#1817B6] hover:bg-indigo-600 transition-all ml-2"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
