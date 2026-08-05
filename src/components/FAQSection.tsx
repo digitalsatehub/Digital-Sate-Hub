@@ -9,11 +9,10 @@ import {
   User,
   Mail,
   Phone,
-  MessageSquare,
   CheckCircle2,
-  ArrowRight,
-  Globe
+  ArrowRight
 } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface FAQSectionProps {
   onOpenBooking: () => void;
@@ -55,7 +54,13 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ onOpenBooking }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-50px' }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="text-center max-w-3xl mx-auto mb-16 space-y-3"
+        >
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-wider">
             <HelpCircle className="w-3.5 h-3.5 text-indigo-400" />
             <span>Got Questions?</span>
@@ -71,13 +76,19 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ onOpenBooking }) => {
           <p className="text-base sm:text-lg text-gray-300 leading-relaxed">
             Clear answers to common questions, or book a strategy session directly via our Cal.com booking form below.
           </p>
-        </div>
+        </motion.div>
 
         {/* Divided 2-Column Section Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
           
           {/* Part 1: FAQ Questions Column (Left) */}
-          <div className="lg:col-span-6 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="lg:col-span-6 space-y-6"
+          >
             
             <div className="bg-white/5 border border-indigo-500/20 rounded-3xl p-6 sm:p-8 backdrop-blur-md">
               <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
@@ -141,10 +152,16 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ onOpenBooking }) => {
 
             </div>
 
-          </div>
+          </motion.div>
 
           {/* Part 2: Cal.com Booking Form Template Column (Right) */}
-          <div className="lg:col-span-6 lg:sticky lg:top-28">
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
+            className="lg:col-span-6 lg:sticky lg:top-28"
+          >
             <div className="bg-[#0b0526] border border-indigo-500/30 hover:border-indigo-400/50 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden">
               
               {/* Cal.com Brand Header Indicator */}
@@ -323,7 +340,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ onOpenBooking }) => {
               )}
 
             </div>
-          </div>
+          </motion.div>
 
         </div>
 

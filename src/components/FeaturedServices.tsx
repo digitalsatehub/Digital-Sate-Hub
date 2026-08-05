@@ -16,6 +16,7 @@ import {
   Sparkles,
   Calculator
 } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface FeaturedServicesProps {
   onNavigate: (page: NavigationPage) => void;
@@ -43,10 +44,16 @@ export const FeaturedServices: React.FC<FeaturedServicesProps> = ({ onNavigate, 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-50px' }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16"
+        >
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
               <span>Result-Oriented Capabilities</span>
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
@@ -68,13 +75,17 @@ export const FeaturedServices: React.FC<FeaturedServicesProps> = ({ onNavigate, 
             <span>Explore All Services</span>
             <ArrowRight className="w-4 h-4" />
           </button>
-        </div>
+        </motion.div>
 
         {/* 8 Featured Service Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {SERVICES_LIST.map((service) => (
-            <div
+          {SERVICES_LIST.map((service, index) => (
+            <motion.div
               key={service.id}
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ duration: 0.5, delay: (index % 4) * 0.08, ease: 'easeOut' }}
               className="bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 group relative"
             >
               <div>
@@ -115,7 +126,7 @@ export const FeaturedServices: React.FC<FeaturedServicesProps> = ({ onNavigate, 
                   <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
                 </button>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 

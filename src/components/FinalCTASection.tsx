@@ -1,14 +1,14 @@
 import React from 'react';
-import { Calendar, Calculator, ArrowRight, Rocket } from 'lucide-react';
+import { Calendar, ArrowRight, Rocket } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface FinalCTASectionProps {
   onOpenBooking: () => void;
-  onOpenQuote: () => void;
+  onOpenQuote?: () => void;
 }
 
 export const FinalCTASection: React.FC<FinalCTASectionProps> = ({
-  onOpenBooking,
-  onOpenQuote
+  onOpenBooking
 }) => {
   return (
     <section className="py-20 bg-gradient-to-br from-[#12063B] via-[#1817B6] to-[#12063B] text-white relative overflow-hidden">
@@ -16,7 +16,13 @@ export const FinalCTASection: React.FC<FinalCTASectionProps> = ({
       <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-500/30 rounded-full blur-[128px] pointer-events-none" />
       <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-600/20 rounded-full blur-[128px] pointer-events-none" />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+      <motion.div
+        initial={{ opacity: 0, y: 35 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-50px' }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center"
+      >
         
         {/* Eyebrow */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-indigo-200 text-xs font-bold uppercase tracking-wider mb-6">
@@ -34,29 +40,20 @@ export const FinalCTASection: React.FC<FinalCTASectionProps> = ({
           Whether you need a high-converting website, a complete sales funnel, or an automated marketing system, we'll help you build a digital experience that supports your business goals and drives measurable results.
         </p>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-xl mx-auto">
+        {/* Single Primary Action Button */}
+        <div className="flex items-center justify-center max-w-xl mx-auto">
           <button
             onClick={onOpenBooking}
             id="final-cta-booking-btn"
-            className="w-full sm:w-auto px-8 py-4 rounded-2xl font-black text-sm text-[#12063B] bg-white hover:bg-indigo-50 shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 group"
+            className="w-full sm:w-auto px-9 py-4 rounded-2xl font-black text-sm text-[#12063B] bg-white hover:bg-indigo-50 shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 group"
           >
             <Calendar className="w-5 h-5 text-[#1817B6]" />
             <span>Book a Free Strategy Call</span>
             <ArrowRight className="w-4 h-4 text-[#1817B6] group-hover:translate-x-1 transition-transform" />
           </button>
-
-          <button
-            onClick={onOpenQuote}
-            id="final-cta-quote-btn"
-            className="w-full sm:w-auto px-7 py-4 rounded-2xl font-bold text-sm text-white bg-white/10 hover:bg-white/20 border border-white/20 transition-all flex items-center justify-center gap-2"
-          >
-            <Calculator className="w-4 h-4 text-indigo-200" />
-            <span>Get a Custom Quote</span>
-          </button>
         </div>
 
-      </div>
+      </motion.div>
     </section>
   );
 };

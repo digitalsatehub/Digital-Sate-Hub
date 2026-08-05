@@ -12,6 +12,7 @@ import { AboutUsSection } from './components/AboutUsSection';
 import { WhyChooseUs } from './components/WhyChooseUs';
 import { VideoTestimonials } from './components/VideoTestimonials';
 import { FeaturedPortfolioSection } from './components/FeaturedPortfolioSection';
+import { FeaturedBlogSection } from './components/FeaturedBlogSection';
 import { FAQSection } from './components/FAQSection';
 import { FinalCTASection } from './components/FinalCTASection';
 
@@ -84,10 +85,13 @@ export function App() {
               onOpenBooking={() => setIsBookingOpen(true)}
             />
 
-            {/* 7. Frequently Asked Questions */}
+            {/* 7. Featured Blog Section (3 Posts linking to Blog Page) */}
+            <FeaturedBlogSection onNavigate={handleNavigate} />
+
+            {/* 8. Frequently Asked Questions */}
             <FAQSection onOpenBooking={() => setIsBookingOpen(true)} />
 
-            {/* 8. Final Call-to-Action */}
+            {/* 9. Final Call-to-Action */}
             <FinalCTASection
               onOpenBooking={() => setIsBookingOpen(true)}
               onOpenQuote={() => setIsQuoteOpen(true)}

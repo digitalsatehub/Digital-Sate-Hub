@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
-import { PORTFOLIO_PROJECTS } from '../data/siteData';
 import { PortfolioShowcase } from '../components/PortfolioShowcase';
-import {
-  Sparkles,
-  ArrowRight,
-  TrendingUp,
-  Layers,
-  Layout,
-  Smartphone,
-  CheckCircle2
-} from 'lucide-react';
+import { TestimonialMarquee } from '../components/TestimonialMarquee';
+import { Layers } from 'lucide-react';
 
 interface PortfolioPageProps {
   onOpenBooking: () => void;
@@ -103,6 +95,9 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({ onOpenBooking }) =
           </div>
         </div>
       </div>
+
+      {/* Testimonial Marquee (Left to Right, Pauses on Hover) */}
+      <TestimonialMarquee />
 
       {/* Main Full Portfolio Showcase Gallery */}
       <PortfolioShowcase onOpenBooking={onOpenBooking} isFullPage={true} />

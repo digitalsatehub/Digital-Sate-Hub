@@ -6,6 +6,7 @@ import {
   Play,
   Pause
 } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface HeroSectionProps {
   onOpenBooking: () => void;
@@ -66,12 +67,20 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center flex flex-col items-center">
         
         {/* Eyebrow Badge */}
-        <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/20 text-indigo-300 text-xs sm:text-sm font-semibold backdrop-blur-sm mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="inline-flex items-center px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/20 text-indigo-300 text-xs sm:text-sm font-semibold backdrop-blur-sm mb-6"
+        >
           <span>Conversion-Focused • Mobile-Optimized • Built for Growth</span>
-        </div>
+        </motion.div>
 
-        {/* Capitalized Headline with Helvetica Font - Locked to exactly 2 lines with larger responsive font */}
-        <h1
+        {/* Capitalized Headline with Helvetica Font */}
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
           style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
           className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight leading-[1.12] text-white max-w-6xl mb-6 capitalize text-center"
         >
@@ -87,18 +96,26 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </span>
             .
           </span>
-        </h1>
+        </motion.h1>
 
         {/* Subheadline with Helvetica Font */}
-        <p
+        <motion.p
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
           style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
           className="text-base sm:text-lg text-gray-300 font-normal leading-relaxed max-w-2xl mb-8"
         >
           We engineer high-converting websites, automated sales funnels, and CRM engines designed explicitly for measurable revenue growth.
-        </p>
+        </motion.p>
 
         {/* Primary CTA Button */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10"
+        >
           <button
             onClick={onOpenBooking}
             id="hero-primary-cta"
@@ -108,10 +125,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <span>Book a Call</span>
             <ChevronRight className="w-4 h-4 text-white/80 group-hover:translate-x-1 transition-transform" />
           </button>
-        </div>
+        </motion.div>
 
         {/* Medium Sized Video Player with Tactile 3D Play Button */}
-        <div className="w-full max-w-2xl relative rounded-2xl overflow-hidden shadow-2xl shadow-indigo-950/90 border border-indigo-500/30 bg-black group/video">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
+          className="w-full max-w-2xl relative rounded-2xl overflow-hidden shadow-2xl shadow-indigo-950/90 border border-indigo-500/30 bg-black group/video"
+        >
           <video
             ref={videoRef}
             src={currentVideoUrl}
@@ -150,7 +172,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               )}
             </button>
           </div>
-        </div>
+        </motion.div>
 
       </div>
     </section>

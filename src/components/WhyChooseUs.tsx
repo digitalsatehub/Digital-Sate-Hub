@@ -7,10 +7,9 @@ import {
   Layers,
   TrendingUp,
   ShieldCheck,
-  CheckCircle2,
-  Sparkles,
   ArrowRight
 } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface WhyChooseUsProps {
   onOpenBooking: () => void;
@@ -33,7 +32,13 @@ export const WhyChooseUs: React.FC<WhyChooseUsProps> = ({ onOpenBooking }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-50px' }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="text-center max-w-3xl mx-auto mb-16 space-y-3"
+        >
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-wider">
             <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
             <span>Why Digital Sate Hub</span>
@@ -49,37 +54,44 @@ export const WhyChooseUs: React.FC<WhyChooseUsProps> = ({ onOpenBooking }) => {
           <p className="text-base sm:text-lg text-gray-300 leading-relaxed">
             We bridge the gap between stunning visual aesthetics and backend conversion infrastructure. Here is why high-growth companies trust Digital Sate Hub.
           </p>
-        </div>
+        </motion.div>
 
         {/* 6 Core Differentiators Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {DIFFERENTIATORS.map((item) => (
-            <div
+          {DIFFERENTIATORS.map((item, index) => (
+            <motion.div
               key={item.title}
-              className="bg-white/5 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 group relative backdrop-blur-md"
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ duration: 0.5, delay: index * 0.08, ease: 'easeOut' }}
+              className="bg-white/5 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 group relative backdrop-blur-md flex flex-col justify-between"
             >
-              <div className="w-12 h-12 rounded-xl bg-[#1817B6]/30 border border-indigo-400/30 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                {getIcon(item.icon)}
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-[#1817B6]/30 border border-indigo-400/30 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                  {getIcon(item.icon)}
+                </div>
+
+                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-indigo-300 transition-colors">
+                  {item.title}
+                </h3>
+
+                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                  {item.desc}
+                </p>
               </div>
-
-              <h3 className="text-xl font-bold text-white mb-3 group-hover:text-indigo-300 transition-colors">
-                {item.title}
-              </h3>
-
-              <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
-                {item.desc}
-              </p>
-
-              <div className="mt-5 pt-4 border-t border-indigo-800/40 flex items-center gap-2 text-xs font-bold text-indigo-300">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Standard In All Our Builds</span>
-              </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {/* Callout */}
-        <div className="mt-16 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-50px' }}
+          transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
+          className="mt-16 text-center"
+        >
           <button
             onClick={onOpenBooking}
             className="px-8 py-4 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-[#1817B6] to-indigo-600 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl shadow-indigo-600/30 border border-indigo-400/30 transition-all inline-flex items-center gap-3 group"
@@ -87,7 +99,7 @@ export const WhyChooseUs: React.FC<WhyChooseUsProps> = ({ onOpenBooking }) => {
             <span>Partner With Digital Sate Hub Today</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
-        </div>
+        </motion.div>
 
       </div>
     </section>

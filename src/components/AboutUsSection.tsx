@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Layers, Users, Award, ArrowRight } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export const STATS = [
   { value: 50, suffix: '+', label: 'Projects Completed', highlight: 'Turnkey Digital Assets', icon: Layers },
@@ -69,7 +70,13 @@ export const AboutUsSection: React.FC<AboutUsSectionProps> = ({ onOpenBooking })
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
           {/* Left Column: Image (Optimized & Anchored to Top) */}
-          <div className="lg:col-span-5 relative group">
+          <motion.div
+            initial={{ opacity: 0, x: -35 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
+            className="lg:col-span-5 relative group"
+          >
             <div className="absolute -inset-2 bg-gradient-to-r from-[#1817B6] to-indigo-500 rounded-3xl opacity-30 group-hover:opacity-50 blur-xl transition-all duration-500 pointer-events-none" />
             
             <div className="relative rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl shadow-indigo-950/90 bg-slate-900/60 w-full">
@@ -82,10 +89,16 @@ export const AboutUsSection: React.FC<AboutUsSectionProps> = ({ onOpenBooking })
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#12063B]/60 via-transparent to-transparent pointer-events-none" />
             </div>
-          </div>
+          </motion.div>
 
           {/* Right Column: About Us Text Content + Stat Counters */}
-          <div className="lg:col-span-7 flex flex-col justify-center space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 35 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.7, delay: 0.1, ease: 'easeOut' }}
+            className="lg:col-span-7 flex flex-col justify-center space-y-6"
+          >
             
             {/* Tag / Badge */}
             <div>
@@ -112,8 +125,12 @@ export const AboutUsSection: React.FC<AboutUsSectionProps> = ({ onOpenBooking })
               {STATS.map((stat, idx) => {
                 const IconComponent = stat.icon;
                 return (
-                  <div
+                  <motion.div
                     key={stat.label}
+                    initial={{ opacity: 0, y: 25 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-30px' }}
+                    transition={{ duration: 0.5, delay: idx * 0.1, ease: 'easeOut' }}
                     className="bg-white/5 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 group backdrop-blur-sm"
                   >
                     <div className="w-10 h-10 mb-3 rounded-xl bg-[#1817B6]/30 border border-indigo-400/30 flex items-center justify-center text-indigo-300 group-hover:scale-110 transition-transform">
@@ -132,7 +149,7 @@ export const AboutUsSection: React.FC<AboutUsSectionProps> = ({ onOpenBooking })
                     <div className="text-[11px] font-medium text-indigo-300/80">
                       {stat.highlight}
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -149,7 +166,7 @@ export const AboutUsSection: React.FC<AboutUsSectionProps> = ({ onOpenBooking })
               </button>
             </div>
 
-          </div>
+          </motion.div>
 
         </div>
       </div>
