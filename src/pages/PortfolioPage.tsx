@@ -80,8 +80,8 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({ onOpenBooking }) =
         </div>
       </div>
 
-      {/* Reviews Section - Designed exactly the way it is on the Home page (Sticky Stacking Cards) */}
-      <VideoTestimonials onOpenBooking={onOpenBooking} />
+      {/* Reviews Section - Continuous left-to-right scrolling marquee, pauses on hover */}
+      <VideoTestimonials variant="marquee" onOpenBooking={onOpenBooking} />
 
     </div>
   );

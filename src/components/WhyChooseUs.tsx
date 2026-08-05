@@ -102,8 +102,8 @@ export const WhyChooseUs: React.FC<WhyChooseUsProps> = ({ onOpenBooking }) => {
             </motion.div>
           </div>
 
-          {/* RIGHT COLUMN: Vertical Services List with Animated 90% Progress Bars */}
-          <div className="lg:col-span-7 space-y-6">
+          {/* RIGHT COLUMN: Clean Services List — Service Icon & Title on top, Progress bar directly below (no extra text/buttons) */}
+          <div className="lg:col-span-7 space-y-5">
             {SERVICES_LIST.map((service, index) => (
               <motion.div
                 key={service.id}
@@ -111,42 +111,25 @@ export const WhyChooseUs: React.FC<WhyChooseUsProps> = ({ onOpenBooking }) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-50px' }}
                 transition={{ duration: 0.5, delay: index * 0.08, ease: 'easeOut' }}
-                className="bg-white/5 border border-indigo-500/20 hover:border-indigo-400/60 rounded-2xl p-6 sm:p-7 transition-all duration-300 hover:-translate-y-1 group relative backdrop-blur-md shadow-xl"
+                className="bg-white/5 border border-indigo-500/20 hover:border-indigo-400/60 rounded-2xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 group relative backdrop-blur-md shadow-xl"
               >
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-xl bg-[#1817B6]/40 border border-indigo-400/30 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-inner">
-                      {getIcon(service.icon)}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white group-hover:text-indigo-300 transition-colors">
-                        {service.title}
-                      </h3>
-                      <div className="text-xs text-emerald-300 font-semibold flex items-center gap-1.5 mt-0.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                        <span>{service.keyResult}</span>
-                      </div>
-                    </div>
+                {/* Service Header: Icon + Title (Up top) */}
+                <div className="flex items-center gap-3.5 mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#1817B6]/40 border border-indigo-400/30 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-inner">
+                    {getIcon(service.icon)}
                   </div>
-
-                  <button
-                    onClick={onOpenBooking}
-                    className="self-start sm:self-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600/30 hover:bg-[#1817B6] border border-indigo-400/30 transition-all flex items-center gap-1.5 group/btn shrink-0"
-                  >
-                    <span>Book Service</span>
-                    <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
-                  </button>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-indigo-300 transition-colors">
+                      {service.title}
+                    </h3>
+                  </div>
                 </div>
 
-                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed mb-5">
-                  {service.shortDesc}
-                </p>
-
-                {/* Animated 90% Progress Bar Component */}
-                <div className="space-y-2 mb-5">
+                {/* Animated 90% Progress Bar (Directly below) */}
+                <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-indigo-200">System Performance & Conversion Efficiency</span>
-                    <span className="text-emerald-400 font-bold">90% Optimized</span>
+                    <span className="text-indigo-200">Optimization & Conversion Score</span>
+                    <span className="text-emerald-400 font-bold">90%</span>
                   </div>
                   
                   {/* Outer Bar Track */}
@@ -160,19 +143,6 @@ export const WhyChooseUs: React.FC<WhyChooseUsProps> = ({ onOpenBooking }) => {
                       className="h-full bg-gradient-to-r from-indigo-500 via-blue-400 to-emerald-400 rounded-full shadow-lg shadow-indigo-500/50"
                     />
                   </div>
-                </div>
-
-                {/* Platform Badges */}
-                <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-indigo-900/40">
-                  <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mr-1">Stack:</span>
-                  {service.platforms.map((plat) => (
-                    <span
-                      key={plat}
-                      className="text-[10px] bg-indigo-950/70 border border-indigo-400/20 text-indigo-200 px-2.5 py-0.5 rounded-md font-medium"
-                    >
-                      {plat}
-                    </span>
-                  ))}
                 </div>
               </motion.div>
             ))}

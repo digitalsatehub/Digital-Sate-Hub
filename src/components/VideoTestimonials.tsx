@@ -77,14 +77,14 @@ export const REVIEWS_DATA: ReviewItem[] = [
   }
 ];
 
-// Upwork White Logo component matching uploaded image
+// Upwork White Logo
 const UpworkLogo: React.FC<{ className?: string }> = ({ className = 'h-5 sm:h-6' }) => (
   <div className={`inline-flex items-center text-white font-extrabold tracking-tighter text-xl sm:text-2xl font-sans ${className}`}>
     <span>upwork</span>
   </div>
 );
 
-// Fiverr White Logo + Green Dot component matching uploaded image
+// Fiverr White Logo + Green Dot
 const FiverrLogo: React.FC<{ className?: string }> = ({ className = 'h-5 sm:h-6' }) => (
   <div className={`inline-flex items-center text-white font-bold tracking-tight text-xl sm:text-2xl font-sans ${className}`}>
     <span className="font-extrabold tracking-tighter">fiverr</span>
@@ -94,9 +94,115 @@ const FiverrLogo: React.FC<{ className?: string }> = ({ className = 'h-5 sm:h-6'
 
 interface VideoTestimonialsProps {
   onOpenBooking?: () => void;
+  variant?: 'stack' | 'marquee';
 }
 
-export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBooking }) => {
+export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({
+  onOpenBooking,
+  variant = 'stack'
+}) => {
+  // If variant is marquee, render continuous left-to-right scrolling reviews track
+  if (variant === 'marquee') {
+    const duplicatedReviews = [...REVIEWS_DATA, ...REVIEWS_DATA, ...REVIEWS_DATA];
+
+    return (
+      <section className="py-20 lg:py-24 bg-[#12063B] text-white relative border-y border-indigo-900/50 overflow-hidden">
+        {/* Background Ambient Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-indigo-600/10 rounded-full blur-[160px] pointer-events-none" />
+
+        {/* Header */}
+        <div className="text-center max-w-3xl mx-auto mb-12 px-4 relative z-10 space-y-3">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Verified Client Reviews • Hover to Pause</span>
+          </div>
+
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+            Client Success &{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-blue-400 to-indigo-200">
+              Verified Feedback
+            </span>
+          </h2>
+        </div>
+
+        {/* Side Fade Overlays */}
+        <div className="absolute left-0 top-0 bottom-0 w-20 sm:w-32 bg-gradient-to-r from-[#12063B] to-transparent z-20 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-32 bg-gradient-to-l from-[#12063B] to-transparent z-20 pointer-events-none" />
+
+        {/* Continuous Left-To-Right Scrolling Marquee Track (Pauses on Hover) */}
+        <div className="overflow-hidden w-full relative z-10 py-4">
+          <div className="animate-marquee-ltr flex gap-6 hover:[animation-play-state:paused] cursor-grab active:cursor-grabbing">
+            {duplicatedReviews.map((rev, idx) => {
+              const isDarkBlue = idx % 2 === 0;
+              const cardBgClass = isDarkBlue
+                ? 'bg-[#0B052B] border-indigo-900/80 shadow-black/80'
+                : 'bg-[#1817B6] border-indigo-400/50 shadow-indigo-950/80';
+
+              return (
+                <div
+                  key={`${rev.id}-${idx}`}
+                  className={`w-[360px] sm:w-[420px] shrink-0 rounded-3xl border p-6 shadow-2xl backdrop-blur-xl flex flex-col justify-between transition-all duration-300 hover:scale-[1.02] ${cardBgClass}`}
+                >
+                  <div>
+                    {/* Top Bar */}
+                    <div className="flex items-center justify-between gap-2 mb-4">
+                      <div className="flex items-center gap-2">
+                        {rev.platform === 'upwork' ? <UpworkLogo className="h-4 sm:h-5" /> : <FiverrLogo className="h-4 sm:h-5" />}
+                      </div>
+
+                      <div className="flex items-center gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="w-3.5 h-3.5 fill-current text-amber-400" />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Category Tag */}
+                    <div className="text-[11px] font-semibold text-indigo-200 mb-3">
+                      {rev.categoryTags}
+                    </div>
+
+                    {/* Quote */}
+                    <p className="text-xs sm:text-sm font-semibold text-white leading-relaxed italic mb-5">
+                      {rev.quote}
+                    </p>
+                  </div>
+
+                  {/* Client Info & Rating */}
+                  <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-bold text-white">{rev.clientName}</div>
+                      <div className="text-[10px] text-gray-300">{rev.verifiedLabel}</div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="text-sm font-black text-amber-300 italic">{rev.ratingValue} Rating</div>
+                      <div className="text-[10px] text-emerald-300 font-medium">{rev.jobSuccessLabel} Job Success</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Bottom CTA */}
+        {onOpenBooking && (
+          <div className="mt-12 text-center relative z-10">
+            <button
+              onClick={onOpenBooking}
+              className="px-8 py-3.5 rounded-full font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-[#1817B6] via-indigo-600 to-indigo-700 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl border border-indigo-300/30 transition-all inline-flex items-center gap-2 group"
+            >
+              <span>Ready to Build Your Project?</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  // Default 'stack' variant (for Home Page)
   return (
     <section className="py-20 lg:py-28 bg-[#12063B] text-white relative border-y border-indigo-900/50 overflow-x-clip">
       {/* Background Ambient Glow */}
@@ -123,12 +229,9 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
           </p>
         </div>
 
-        {/* Single Column Stacking Reviews - Lapping directly on top as you scroll */}
+        {/* Single Column Stacking Reviews */}
         <div className="flex flex-col gap-20 sm:gap-28 relative pb-20">
           {REVIEWS_DATA.map((rev, idx) => {
-            // Alternating color design based on image specification:
-            // Odd index (0, 2, 4): Dark Blue background (#0B052B)
-            // Even index (1, 3): Light Blue background (#1817B6)
             const isDarkBlue = idx % 2 === 0;
 
             const cardBgClass = isDarkBlue
@@ -139,9 +242,6 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
               ? 'bg-[#150b3d] border-indigo-900/50'
               : 'bg-[#14139c] border-indigo-400/30';
 
-            // Progressive sticky top offset (e.g., 90px + idx * 24px)
-            // This creates the clean deck-stacking effect where each card slides up over the previous one,
-            // leaving a neat 24px top header band visible from the card underneath!
             const topOffset = 96 + idx * 24;
 
             return (
@@ -150,19 +250,14 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
                 style={{ top: `${topOffset}px`, zIndex: 10 + idx }}
                 className={`sticky rounded-[28px] border p-6 sm:p-9 shadow-2xl transition-all duration-300 group backdrop-blur-2xl ${cardBgClass}`}
               >
-                {/* Top Bar: Platform Logo + Category Tags (Left) and 5 White Stars (Right) */}
+                {/* Top Bar */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-2">
                   <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-medium text-gray-300">
-                    {rev.platform === 'upwork' ? (
-                      <UpworkLogo />
-                    ) : (
-                      <FiverrLogo />
-                    )}
+                    {rev.platform === 'upwork' ? <UpworkLogo /> : <FiverrLogo />}
                     <span className="hidden sm:inline text-gray-400">•</span>
                     <span className="text-gray-200 font-semibold tracking-wide">{rev.categoryTags}</span>
                   </div>
 
-                  {/* 5 White Stars top right */}
                   <div className="flex items-center gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="w-4 sm:w-5 h-4 sm:h-5 fill-current text-white" />
@@ -170,24 +265,20 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
                   </div>
                 </div>
 
-                {/* Inner Quote Box Container */}
+                {/* Inner Quote Box */}
                 <div className={`rounded-2xl border p-5 sm:p-7 mb-5 ${innerBoxBgClass}`}>
-                  {/* Large Quote */}
                   <p className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-snug mb-4">
                     {rev.quote}
                   </p>
 
-                  {/* Client Name & Verified Tag */}
                   <div className="flex items-center gap-2 text-sm sm:text-base">
                     <span className="font-bold text-white">{rev.clientName}</span>
                     <span className="text-gray-300 text-xs font-normal">• {rev.verifiedLabel}</span>
                   </div>
                 </div>
 
-                {/* Bottom Row Metrics: 5.0 Rating | Fast Speed | 100% Success */}
+                {/* Bottom Row Metrics */}
                 <div className="grid grid-cols-3 gap-4 pt-2 border-t border-white/10 items-center">
-                  
-                  {/* Metric 1: Rating with GOLDEN STARS */}
                   <div>
                     <div className="text-2xl sm:text-3xl font-black italic tracking-tight text-white">
                       {rev.ratingValue}
@@ -199,7 +290,6 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
                     </div>
                   </div>
 
-                  {/* Metric 2: Speed */}
                   <div>
                     <div className="text-2xl sm:text-3xl font-black italic tracking-tight text-white">
                       {rev.speedLabel}
@@ -209,7 +299,6 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
                     </div>
                   </div>
 
-                  {/* Metric 3: Success */}
                   <div>
                     <div className="text-2xl sm:text-3xl font-black italic tracking-tight text-white">
                       {rev.jobSuccessLabel}
@@ -218,7 +307,6 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
                       Job success
                     </div>
                   </div>
-
                 </div>
 
               </div>
@@ -226,17 +314,19 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({ onOpenBook
           })}
         </div>
 
-        {/* Optional Call To Action at Bottom of Reviews */}
-        <div className="mt-20 text-center">
-          <button
-            onClick={onOpenBooking}
-            id="reviews-cta-button"
-            className="px-8 py-4 rounded-full font-bold text-base text-white bg-gradient-to-r from-[#1817B6] via-indigo-600 to-indigo-700 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl shadow-indigo-600/40 hover:shadow-indigo-600/60 border border-indigo-300/30 transition-all duration-300 inline-flex items-center justify-center gap-3 group transform hover:-translate-y-0.5"
-          >
-            <span>Ready to Build Your Project?</span>
-            <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1 transition-transform" />
-          </button>
-        </div>
+        {/* Call To Action */}
+        {onOpenBooking && (
+          <div className="mt-20 text-center">
+            <button
+              onClick={onOpenBooking}
+              id="reviews-cta-button"
+              className="px-8 py-4 rounded-full font-bold text-base text-white bg-gradient-to-r from-[#1817B6] via-indigo-600 to-indigo-700 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl border border-indigo-300/30 transition-all inline-flex items-center justify-center gap-3 group"
+            >
+              <span>Ready to Build Your Project?</span>
+              <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        )}
 
       </div>
     </section>
