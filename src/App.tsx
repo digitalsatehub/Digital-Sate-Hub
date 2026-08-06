@@ -32,7 +32,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<NavigationPage>(() => {
     const hash = window.location.hash.toLowerCase();
     const path = window.location.pathname.toLowerCase();
-    if (hash === '#admin' || hash === '#joju' || path.includes('/admin') || path.includes('/joju')) {
+    if (hash === '#joju' || path.includes('/joju')) {
       return 'admin';
     }
     return 'home';
@@ -51,12 +51,12 @@ export default function App() {
     }
   }, [currentPage]);
 
-  // Listen for URL changes (#joju, #admin, /joju, /admin) and secret key sequence 'joju'
+  // Listen for URL changes (#joju, /joju)
   useEffect(() => {
     const checkUrlForAdmin = () => {
       const hash = window.location.hash.toLowerCase();
       const path = window.location.pathname.toLowerCase();
-      if (hash === '#admin' || hash === '#joju' || path.endsWith('/admin') || path.endsWith('/joju') || path.includes('/joju') || path.includes('/admin')) {
+      if (hash === '#joju' || path.endsWith('/joju') || path.includes('/joju')) {
         setCurrentPage('admin');
       }
     };
@@ -64,31 +64,9 @@ export default function App() {
     window.addEventListener('hashchange', checkUrlForAdmin);
     window.addEventListener('popstate', checkUrlForAdmin);
 
-    // Secret keyword listener: typing 'joju' triggers admin page
-    let keyBuffer = '';
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is typing inside input/textarea
-      const target = e.target as HTMLElement;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
-        return;
-      }
-
-      keyBuffer += e.key.toLowerCase();
-      if (keyBuffer.length > 10) {
-        keyBuffer = keyBuffer.slice(-10);
-      }
-      if (keyBuffer.includes('joju')) {
-        keyBuffer = '';
-        setCurrentPage('admin');
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
     return () => {
       window.removeEventListener('hashchange', checkUrlForAdmin);
       window.removeEventListener('popstate', checkUrlForAdmin);
-      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 

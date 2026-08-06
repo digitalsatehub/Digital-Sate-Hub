@@ -7,8 +7,8 @@ import {
   MapPin,
   ShieldCheck,
   FileText,
-  Lock,
   Twitter,
+  Linkedin,
   Youtube,
   Facebook
 } from 'lucide-react';
@@ -28,7 +28,14 @@ export const Footer: React.FC<FooterProps> = ({
   const [socials, setSocials] = useState<SocialLinks>(getSocialLinks());
 
   useEffect(() => {
-    setSocials(getSocialLinks());
+    const handleUpdate = () => {
+      setSocials(getSocialLinks());
+    };
+    handleUpdate();
+    window.addEventListener('dsh_socials_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('dsh_socials_updated', handleUpdate);
+    };
   }, []);
   return (
     <footer className="bg-[#0A0322] text-gray-300 border-t border-indigo-900/60 pt-16 pb-12 relative overflow-hidden">
@@ -124,6 +131,19 @@ export const Footer: React.FC<FooterProps> = ({
                 Connect With Us:
               </span>
               <div className="flex items-center gap-2.5 flex-wrap">
+                {/* LinkedIn */}
+                {socials.linkedin && (
+                  <a
+                    href={socials.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 hover:border-indigo-400 hover:bg-[#1817B6] flex items-center justify-center text-gray-300 hover:text-white transition-all shadow-md group"
+                    title="LinkedIn"
+                  >
+                    <Linkedin className="w-4 h-4" />
+                  </a>
+                )}
+
                 {/* X (Twitter) */}
                 {socials.twitter && (
                   <a
@@ -187,7 +207,7 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Bottom Legal & Copyright Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
           <div>
-            © {new Date().getFullYear()} <span onClick={() => onNavigate('admin')} className="cursor-pointer hover:text-gray-400 transition-colors" title="Digital Sate Hub">Digital Sate Hub</span>. All Rights Reserved. Built for Business Growth.
+            © {new Date().getFullYear()} Digital Sate Hub. All Rights Reserved. <span onClick={() => onNavigate('admin')} className="cursor-pointer hover:text-gray-300 transition-colors">Built</span> for Business Growth.
           </div>
 
           <div className="flex items-center gap-6">

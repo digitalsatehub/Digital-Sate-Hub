@@ -59,51 +59,7 @@ const DEFAULT_SOCIAL_LINKS: SocialLinks = {
   address: 'London, UK & Global Remote Studio'
 };
 
-const DEFAULT_SUBMISSIONS: FormSubmission[] = [
-  {
-    id: 'sub-101',
-    type: 'contact',
-    name: 'Marcus Vance',
-    email: 'marcus@vancegrowth.com',
-    phone: '+1 (555) 234-5678',
-    businessName: 'Vance Growth Media',
-    websiteUrl: 'https://vancegrowth.com',
-    serviceRequested: 'Full Turnkey Digital Growth System',
-    message: 'Looking for a complete overhaul of our sales funnel and GoHighLevel CRM workflow.',
-    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // 3 hours ago
-    status: 'new'
-  },
-  {
-    id: 'sub-102',
-    type: 'booking',
-    name: 'Sarah Jenkins',
-    email: 'sjenkins@apexrealestate.co',
-    phone: '+1 (555) 876-5432',
-    businessName: 'Apex Real Estate Partners',
-    websiteUrl: 'https://apexrealestate.co',
-    serviceRequested: 'GoHighLevel CRM & Lead Automation',
-    preferredDate: '2026-08-10',
-    preferredTime: '14:00 EST',
-    message: 'Want to integrate automated SMS follow-ups for real estate lead ads.',
-    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
-    status: 'contacted'
-  },
-  {
-    id: 'sub-103',
-    type: 'quote',
-    name: 'David Chen',
-    email: 'david@luminaecommerce.io',
-    phone: '+1 (555) 432-1098',
-    businessName: 'Lumina E-Commerce',
-    websiteUrl: 'https://luminaecommerce.io',
-    selectedServices: ['Sales Funnels & Checkout', 'Multi-Channel Automation'],
-    estimatedBudget: '$5,000 - $10,000',
-    timeline: '2 - 3 Weeks',
-    notes: 'Need a Shopify landing page connected with Klaviyo sequences.',
-    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 42).toISOString(),
-    status: 'completed'
-  }
-];
+const DEFAULT_SUBMISSIONS: FormSubmission[] = [];
 
 // LocalStorage Keys
 const SOCIAL_KEY = 'dsh_admin_social_links';
@@ -125,6 +81,7 @@ export function getSocialLinks(): SocialLinks {
 export function saveSocialLinks(links: SocialLinks): void {
   try {
     localStorage.setItem(SOCIAL_KEY, JSON.stringify(links));
+    window.dispatchEvent(new Event('dsh_socials_updated'));
   } catch (err) {
     console.error('Error saving social links:', err);
   }
@@ -220,6 +177,15 @@ export function deleteFormSubmission(id: string): FormSubmission[] {
     console.error('Error deleting submission:', err);
   }
   return updated;
+}
+
+export function clearAllSubmissions(): FormSubmission[] {
+  try {
+    localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify([]));
+  } catch (err) {
+    console.error('Error clearing submissions:', err);
+  }
+  return [];
 }
 
 // Initial clean analytics state template

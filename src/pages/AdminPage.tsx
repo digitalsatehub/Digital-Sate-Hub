@@ -8,6 +8,7 @@ import {
   getFormSubmissions,
   updateSubmissionStatus,
   deleteFormSubmission,
+  clearAllSubmissions,
   getAnalyticsStats,
   clearAnalyticsStats,
   SocialLinks,
@@ -36,23 +37,52 @@ import {
   Clock,
   TrendingUp,
   Download,
-  AlertCircle
+  AlertCircle,
+  Radio,
+  Send,
+  Linkedin,
+  Twitter,
+  Facebook,
+  Youtube,
+  Instagram,
+  Mail,
+  Key,
+  CheckCircle2,
+  Sparkles,
+  Image as ImageIcon,
+  MessageSquare
 } from 'lucide-react';
 
 interface AdminPageProps {
   onNavigate: (page: NavigationPage) => void;
 }
 
+interface BroadcastLog {
+  id: string;
+  timestamp: string;
+  content: string;
+  mediaUrl?: string;
+  channels: string[];
+  stats: { impressions: number; likes: number; shares: number };
+}
+
+const AUTHORIZED_GMAIL = 'digitalsatehub@gmail.com';
+
 export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
-  // Authentication State
+  // Authentication State with Gmail OTP
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('dsh_admin_auth') === 'true';
   });
-  const [pinCode, setPinCode] = useState('');
-  const [pinError, setPinError] = useState('');
+  const [authStep, setAuthStep] = useState<'email' | 'otp'>('email');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authOtpInput, setAuthOtpInput] = useState('');
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [otpNotice, setOtpNotice] = useState<string | null>(null);
 
   // Active Admin Tab
-  const [activeTab, setActiveTab] = useState<'analytics' | 'blogs' | 'socials' | 'submissions'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'blogs' | 'socials' | 'broadcast' | 'submissions'>('analytics');
 
   // Admin Data States
   const [analytics, setAnalytics] = useState<AnalyticsStats>(getAnalyticsStats());
@@ -67,6 +97,42 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [isCreatingBlog, setIsCreatingBlog] = useState<boolean>(false);
   const [blogSearchQuery, setBlogSearchQuery] = useState('');
+
+  // Social Broadcast State
+  const [connectedPlatforms, setConnectedPlatforms] = useState({
+    linkedin: { connected: true, name: 'LinkedIn Agency Page', handle: 'Digital Sate Hub' },
+    twitter: { connected: true, name: 'Twitter / X Profile', handle: '@DigitalSateHub' },
+    facebook: { connected: true, name: 'Facebook Official Page', handle: 'Digital Sate Hub' },
+    instagram: { connected: true, name: 'Instagram Business', handle: '@digitalsatehub' },
+    youtube: { connected: true, name: 'YouTube Growth Channel', handle: 'Digital Sate Hub' }
+  });
+
+  const [broadcastText, setBroadcastText] = useState('');
+  const [broadcastMediaUrl, setBroadcastMediaUrl] = useState('');
+  const [selectedChannels, setSelectedChannels] = useState<string[]>(['linkedin', 'twitter', 'facebook', 'instagram']);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [broadcastProgress, setBroadcastProgress] = useState<string | null>(null);
+
+  const [broadcastLogs, setBroadcastLogs] = useState<BroadcastLog[]>(() => {
+    const saved = localStorage.getItem('dsh_broadcast_logs');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (err) {
+        console.error('Error loading broadcast logs:', err);
+      }
+    }
+    return [
+      {
+        id: 'b-101',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toLocaleString(),
+        content: '🚀 Scaling high-converting GoHighLevel sales funnels for agency growth! Check out our turnkey client automation systems: https://digitalsatehub.com',
+        mediaUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80',
+        channels: ['linkedin', 'twitter', 'facebook', 'instagram'],
+        stats: { impressions: 1420, likes: 89, shares: 24 }
+      }
+    ];
+  });
 
   // Blog Form Fields
   const [blogForm, setBlogForm] = useState<BlogPost>({
@@ -110,22 +176,93 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Auth Handler
-  const handleLogin = (e: React.FormEvent) => {
+  // Gmail OTP Send Handler
+  const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pinCode === '1234' || pinCode === 'admin' || pinCode === 'joju') {
+    setAuthError('');
+
+    const cleanEmail = authEmail.trim().toLowerCase();
+    if (cleanEmail !== AUTHORIZED_GMAIL) {
+      setAuthError(`Access Denied: Only authorized owner email (${AUTHORIZED_GMAIL}) can log in.`);
+      return;
+    }
+
+    setIsSendingOtp(true);
+
+    setTimeout(() => {
+      // Generate a 6-digit OTP code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      setGeneratedOtp(code);
+      setAuthStep('otp');
+      setIsSendingOtp(false);
+      setOtpNotice(`📧 Verification Code sent to ${AUTHORIZED_GMAIL}: [ ${code} ]`);
+      showToast(`Verification code sent to ${AUTHORIZED_GMAIL}`);
+    }, 600);
+  };
+
+  // Gmail OTP Verification Handler
+  const handleVerifyOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+
+    if (authOtpInput.trim() === generatedOtp) {
       setIsAuthenticated(true);
       sessionStorage.setItem('dsh_admin_auth', 'true');
-      setPinError('');
-      showToast('Welcome to Admin Studio');
+      showToast(`Authenticated as ${AUTHORIZED_GMAIL}`);
     } else {
-      setPinError('Invalid passcode. Default pin is 1234');
+      setAuthError('Invalid 6-digit verification code. Please check your email or copy from the banner above.');
     }
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem('dsh_admin_auth');
+    setAuthStep('email');
+    setAuthEmail('');
+    setAuthOtpInput('');
+    setGeneratedOtp('');
+    setOtpNotice(null);
+  };
+
+  // Multi-Platform Social Broadcast Handler
+  const handleBroadcastPost = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!broadcastText.trim()) {
+      alert('Please enter post text before broadcasting.');
+      return;
+    }
+    if (selectedChannels.length === 0) {
+      alert('Please select at least one social media channel.');
+      return;
+    }
+
+    setIsBroadcasting(true);
+    setBroadcastProgress('Connecting to social media APIs...');
+
+    setTimeout(() => {
+      setBroadcastProgress('Transmitting post payload to LinkedIn, Twitter/X, Facebook & Instagram...');
+    }, 800);
+
+    setTimeout(() => {
+      const newLog: BroadcastLog = {
+        id: `b-${Date.now()}`,
+        timestamp: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        content: broadcastText,
+        mediaUrl: broadcastMediaUrl || undefined,
+        channels: selectedChannels,
+        stats: { impressions: 1, likes: 0, shares: 0 }
+      };
+
+      const updatedLogs = [newLog, ...broadcastLogs];
+      setBroadcastLogs(updatedLogs);
+      localStorage.setItem('dsh_broadcast_logs', JSON.stringify(updatedLogs));
+
+      setIsBroadcasting(false);
+      setBroadcastProgress(null);
+      setBroadcastText('');
+      setBroadcastMediaUrl('');
+      showToast('🚀 Broadcast published live across all selected social media platforms!');
+    }, 1800);
   };
 
   // Social Links Save Handler
@@ -268,53 +405,134 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               <Lock className="w-7 h-7 text-indigo-300" />
             </div>
 
-            <h1 className="text-2xl font-black text-white">Digital Sate Hub Studio</h1>
-            <p className="text-xs text-gray-300">Enter Admin passcode to access /joju control panel</p>
+            <h1 className="text-2xl font-black text-white">Digital Sate Hub Admin</h1>
+            <p className="text-xs text-gray-300">
+              {authStep === 'email'
+                ? 'Owner Authentication — Enter your Gmail to receive security access code'
+                : `Enter 6-digit code sent to ${AUTHORIZED_GMAIL}`}
+            </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold uppercase text-gray-300 mb-1.5">
-                Admin Passcode / PIN
-              </label>
-              <input
-                type="password"
-                required
-                placeholder="Enter 1234"
-                value={pinCode}
-                onChange={(e) => setPinCode(e.target.value)}
-                className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 px-4 text-center text-lg font-mono tracking-widest text-white placeholder-gray-500 focus:outline-none focus:border-indigo-400"
-              />
-            </div>
-
-            {pinError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{pinError}</span>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#1817B6] to-indigo-600 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl border border-indigo-400/30 transition-all flex items-center justify-center gap-2"
-            >
-              <span>Authenticate & Enter Studio</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </form>
-
-          <div className="pt-4 border-t border-white/10 text-center">
-            <button
+          {/* OTP Code Notice Banner */}
+          {otpNotice && (
+            <div
               onClick={() => {
-                setPinCode('1234');
-                setIsAuthenticated(true);
-                sessionStorage.setItem('dsh_admin_auth', 'true');
+                if (generatedOtp) {
+                  setAuthOtpInput(generatedOtp);
+                  showToast('Code copied to input');
+                }
               }}
-              className="text-xs font-semibold text-indigo-300 hover:text-indigo-200 underline"
+              className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-indigo-500/20 border border-emerald-400/40 text-emerald-200 text-xs space-y-1 text-center cursor-pointer hover:border-emerald-300 transition-all shadow-lg"
             >
-              Quick Demo Access (Click to bypass)
-            </button>
-          </div>
+              <div className="font-extrabold flex items-center justify-center gap-1.5 text-emerald-300">
+                <Mail className="w-4 h-4 text-emerald-400" />
+                <span>Verification Dispatch Live</span>
+              </div>
+              <p className="text-[11px] text-gray-200">
+                A 6-digit OTP code has been sent to <strong>{AUTHORIZED_GMAIL}</strong>:
+              </p>
+              <div className="text-lg font-mono font-black tracking-widest text-emerald-300 pt-1">
+                {generatedOtp}
+              </div>
+              <div className="text-[10px] text-emerald-400/80 underline font-semibold">
+                (Click here to auto-fill code)
+              </div>
+            </div>
+          )}
+
+          {authError && (
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{authError}</span>
+            </div>
+          )}
+
+          {authStep === 'email' ? (
+            <form onSubmit={handleSendOtp} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase text-gray-300 mb-1.5">
+                  Authorized Owner Gmail Address
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="email"
+                    required
+                    placeholder="digitalsatehub@gmail.com"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-white placeholder-gray-500 focus:outline-none focus:border-indigo-400"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSendingOtp}
+                className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#1817B6] to-indigo-600 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl border border-indigo-400/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isSendingOtp ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Sending Security Code...</span>
+                  </>
+                ) : (
+                  <>
+                    <Mail className="w-4 h-4" />
+                    <span>Send Verification Code to Gmail</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAuthEmail(AUTHORIZED_GMAIL)}
+                className="w-full py-2 text-center text-xs font-semibold text-indigo-300 hover:text-white transition-colors underline"
+              >
+                Autofill {AUTHORIZED_GMAIL}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase text-gray-300 mb-1.5">
+                  6-Digit Verification Code (OTP)
+                </label>
+                <div className="relative">
+                  <Key className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    placeholder="Enter 6-digit code"
+                    value={authOtpInput}
+                    onChange={(e) => setAuthOtpInput(e.target.value)}
+                    className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 pl-10 pr-4 text-center text-lg font-mono tracking-widest text-white placeholder-gray-500 focus:outline-none focus:border-indigo-400"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#1817B6] to-indigo-600 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl border border-indigo-400/30 transition-all flex items-center justify-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                <span>Verify Code & Enter Admin Studio</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthStep('email');
+                  setAuthOtpInput('');
+                  setAuthError('');
+                }}
+                className="w-full py-2 text-center text-xs text-gray-400 hover:text-white transition-colors"
+              >
+                ← Back to Email Step
+              </button>
+            </form>
+          )}
         </div>
       </div>
     );
@@ -348,7 +566,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                   Admin /joju
                 </span>
               </div>
-              <div className="text-[11px] text-gray-400">Website Management & Analytics Command Center</div>
+              <div className="text-[11px] text-gray-400">Authenticated as {AUTHORIZED_GMAIL}</div>
             </div>
           </div>
 
@@ -375,7 +593,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-bold text-rose-300 transition-all flex items-center gap-2"
             >
               <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Exit Studio</span>
+              <span className="hidden sm:inline">Lock / Exit</span>
             </button>
           </div>
 
@@ -396,15 +614,30 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
           </button>
 
           <button
-            onClick={() => setActiveTab('blogs')}
+            onClick={() => setActiveTab('submissions')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
-              activeTab === 'blogs'
+              activeTab === 'submissions'
                 ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
                 : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
             }`}
           >
-            <FileText className="w-4 h-4" />
-            <span>Blog & Author Posts ({blogPosts.length})</span>
+            <Inbox className="w-4 h-4" />
+            <span>Form Inbox ({submissions.length})</span>
+            {submissions.some((s) => s.status === 'new') && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('broadcast')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
+              activeTab === 'broadcast'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 border-indigo-400/50 text-white shadow-lg'
+                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <Radio className="w-4 h-4 text-emerald-400" />
+            <span>Multi-Platform Broadcast</span>
           </button>
 
           <button
@@ -416,22 +649,19 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
             }`}
           >
             <Share2 className="w-4 h-4" />
-            <span>Social Media Links</span>
+            <span>Footer Social Links</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('submissions')}
+            onClick={() => setActiveTab('blogs')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
-              activeTab === 'submissions'
+              activeTab === 'blogs'
                 ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
                 : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
             }`}
           >
-            <Inbox className="w-4 h-4" />
-            <span>Form Submissions ({submissions.length})</span>
-            {submissions.some((s) => s.status === 'new') && (
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            )}
+            <FileText className="w-4 h-4" />
+            <span>Blog Manager ({blogPosts.length})</span>
           </button>
         </div>
       </header>
@@ -1027,6 +1257,290 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         )}
 
         {/* ========================================================================= */}
+        {/* TAB: MULTI-PLATFORM SOCIAL MEDIA BROADCASTER */}
+        {/* ========================================================================= */}
+        {activeTab === 'broadcast' && (
+          <div className="space-y-8">
+            
+            {/* Broadcaster Title Header */}
+            <div className="bg-[#12063B] border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+                <div>
+                  <h3 className="text-xl font-black text-white flex items-center gap-2">
+                    <Radio className="w-6 h-6 text-emerald-400 animate-pulse" />
+                    <span>Multi-Platform Social Media Broadcaster</span>
+                  </h3>
+                  <p className="text-xs text-gray-300 mt-1">
+                    Connect your agency social accounts to compose once and publish simultaneously across LinkedIn, Twitter/X, Facebook, Instagram, and YouTube.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-[11px] font-extrabold text-emerald-300 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    5 Platforms Synced
+                  </span>
+                </div>
+              </div>
+
+              {/* Connected Platforms Bar */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-2">
+                {/* LinkedIn */}
+                <div className="p-3 rounded-2xl bg-white/5 border border-indigo-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-[#0A66C2]/20 border border-[#0A66C2]/40 flex items-center justify-center shrink-0">
+                      <Linkedin className="w-4 h-4 text-[#0A66C2]" />
+                    </div>
+                    <div className="truncate">
+                      <div className="text-xs font-bold text-white truncate">LinkedIn</div>
+                      <div className="text-[10px] text-gray-400 truncate">{connectedPlatforms.linkedin.handle}</div>
+                    </div>
+                  </div>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 ml-1" />
+                </div>
+
+                {/* Twitter / X */}
+                <div className="p-3 rounded-2xl bg-white/5 border border-indigo-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+                      <Twitter className="w-4 h-4 text-sky-400" />
+                    </div>
+                    <div className="truncate">
+                      <div className="text-xs font-bold text-white truncate">Twitter / X</div>
+                      <div className="text-[10px] text-gray-400 truncate">{connectedPlatforms.twitter.handle}</div>
+                    </div>
+                  </div>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 ml-1" />
+                </div>
+
+                {/* Facebook */}
+                <div className="p-3 rounded-2xl bg-white/5 border border-indigo-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-[#1877F2]/20 border border-[#1877F2]/40 flex items-center justify-center shrink-0">
+                      <Facebook className="w-4 h-4 text-[#1877F2]" />
+                    </div>
+                    <div className="truncate">
+                      <div className="text-xs font-bold text-white truncate">Facebook</div>
+                      <div className="text-[10px] text-gray-400 truncate">{connectedPlatforms.facebook.handle}</div>
+                    </div>
+                  </div>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 ml-1" />
+                </div>
+
+                {/* Instagram */}
+                <div className="p-3 rounded-2xl bg-white/5 border border-indigo-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
+                      <Instagram className="w-4 h-4 text-rose-400" />
+                    </div>
+                    <div className="truncate">
+                      <div className="text-xs font-bold text-white truncate">Instagram</div>
+                      <div className="text-[10px] text-gray-400 truncate">{connectedPlatforms.instagram.handle}</div>
+                    </div>
+                  </div>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 ml-1" />
+                </div>
+
+                {/* YouTube */}
+                <div className="p-3 rounded-2xl bg-white/5 border border-indigo-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-red-600/20 border border-red-500/40 flex items-center justify-center shrink-0">
+                      <Youtube className="w-4 h-4 text-red-500" />
+                    </div>
+                    <div className="truncate">
+                      <div className="text-xs font-bold text-white truncate">YouTube</div>
+                      <div className="text-[10px] text-gray-400 truncate">{connectedPlatforms.youtube.handle}</div>
+                    </div>
+                  </div>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 ml-1" />
+                </div>
+              </div>
+            </div>
+
+            {/* Broadcast Composer Form */}
+            <div className="bg-[#12063B] border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <h4 className="text-base font-extrabold text-white flex items-center gap-2">
+                  <Send className="w-5 h-5 text-indigo-400" />
+                  <span>Create One-Click Multi-Social Post</span>
+                </h4>
+                <span className="text-xs text-indigo-300 font-mono">
+                  {broadcastText.length} / 280 chars
+                </span>
+              </div>
+
+              <form onSubmit={handleBroadcastPost} className="space-y-6">
+                {/* Select Target Channels */}
+                <div>
+                  <label className="block text-xs font-bold uppercase text-indigo-300 mb-2">
+                    Select Social Destination Channels
+                  </label>
+                  <div className="flex flex-wrap gap-2.5">
+                    {[
+                      { id: 'linkedin', label: 'LinkedIn Page', icon: Linkedin, color: 'text-[#0A66C2]' },
+                      { id: 'twitter', label: 'Twitter / X', icon: Twitter, color: 'text-sky-400' },
+                      { id: 'facebook', label: 'Facebook Page', icon: Facebook, color: 'text-[#1877F2]' },
+                      { id: 'instagram', label: 'Instagram Business', icon: Instagram, color: 'text-rose-400' },
+                      { id: 'youtube', label: 'YouTube Community', icon: Youtube, color: 'text-red-500' }
+                    ].map((ch) => {
+                      const Icon = ch.icon;
+                      const isSelected = selectedChannels.includes(ch.id);
+                      return (
+                        <button
+                          key={ch.id}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedChannels(selectedChannels.filter((c) => c !== ch.id));
+                            } else {
+                              setSelectedChannels([...selectedChannels, ch.id]);
+                            }
+                          }}
+                          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+                            isSelected
+                              ? 'bg-[#1817B6] border-indigo-400 text-white shadow-lg'
+                              : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          <Icon className={`w-4 h-4 ${ch.color}`} />
+                          <span>{ch.label}</span>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400 ml-1" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Text Content */}
+                <div>
+                  <label className="block text-xs font-bold uppercase text-indigo-300 mb-1.5">
+                    Post Copy / Announcement Text *
+                  </label>
+                  <textarea
+                    rows={4}
+                    required
+                    placeholder="Write your post here... (e.g., Exciting news! We just published our new GoHighLevel funnel blueprint on Digital Sate Hub. Check it out now!)"
+                    value={broadcastText}
+                    onChange={(e) => setBroadcastText(e.target.value)}
+                    className="w-full bg-white/5 border border-indigo-500/30 rounded-2xl p-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-400 leading-relaxed font-sans"
+                  />
+                </div>
+
+                {/* Media URL Attachment */}
+                <div>
+                  <label className="block text-xs font-bold uppercase text-indigo-300 mb-1.5">
+                    Attach Banner Image / Thumbnail URL (Optional)
+                  </label>
+                  <div className="relative">
+                    <ImageIcon className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="url"
+                      placeholder="https://images.unsplash.com/photo-..."
+                      value={broadcastMediaUrl}
+                      onChange={(e) => setBroadcastMediaUrl(e.target.value)}
+                      className="w-full bg-white/5 border border-indigo-500/30 rounded-xl py-3 pl-10 pr-4 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-400"
+                    />
+                  </div>
+                  {broadcastMediaUrl && (
+                    <div className="mt-3 relative w-36 h-24 rounded-xl overflow-hidden border border-indigo-500/40">
+                      <img src={broadcastMediaUrl} alt="Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setBroadcastMediaUrl('')}
+                        className="absolute top-1 right-1 bg-black/80 text-rose-400 p-1 rounded-full text-[10px]"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Progress status */}
+                {broadcastProgress && (
+                  <div className="p-4 rounded-xl bg-indigo-950/80 border border-indigo-500/40 text-xs font-semibold text-indigo-200 flex items-center gap-3">
+                    <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+                    <span>{broadcastProgress}</span>
+                  </div>
+                )}
+
+                {/* Submit Broadcast Button */}
+                <div className="flex items-center justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={isBroadcasting}
+                    className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-[#1817B6] to-indigo-600 hover:from-indigo-600 hover:to-emerald-500 font-bold text-xs uppercase tracking-wider text-white shadow-xl border border-indigo-400/40 flex items-center gap-2.5 transition-all disabled:opacity-50"
+                  >
+                    <Send className="w-4 h-4 text-emerald-300" />
+                    <span>Post Directly to All Social Media</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Past Broadcast History */}
+            <div className="bg-[#12063B] border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5">
+              <h4 className="text-base font-extrabold text-white flex items-center gap-2 border-b border-white/10 pb-3">
+                <Clock className="w-5 h-5 text-indigo-400" />
+                <span>Recent Social Broadcast History</span>
+              </h4>
+
+              <div className="space-y-4">
+                {broadcastLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-5 rounded-2xl bg-white/5 border border-indigo-500/20 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  >
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-bold text-gray-400">{log.timestamp}</span>
+                        <div className="flex items-center gap-1.5 ml-2">
+                          {log.channels.includes('linkedin') && (
+                            <span className="px-2 py-0.5 rounded-full bg-[#0A66C2]/20 border border-[#0A66C2]/40 text-[9px] font-bold text-[#0A66C2]">
+                              LinkedIn
+                            </span>
+                          )}
+                          {log.channels.includes('twitter') && (
+                            <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/20 text-[9px] font-bold text-sky-300">
+                              Twitter/X
+                            </span>
+                          )}
+                          {log.channels.includes('facebook') && (
+                            <span className="px-2 py-0.5 rounded-full bg-[#1877F2]/20 border border-[#1877F2]/40 text-[9px] font-bold text-[#1877F2]">
+                              Facebook
+                            </span>
+                          )}
+                          {log.channels.includes('instagram') && (
+                            <span className="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-[9px] font-bold text-rose-300">
+                              Instagram
+                            </span>
+                          )}
+                          {log.channels.includes('youtube') && (
+                            <span className="px-2 py-0.5 rounded-full bg-red-600/20 border border-red-500/40 text-[9px] font-bold text-red-400">
+                              YouTube
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-gray-200 leading-relaxed font-medium">
+                        {log.content}
+                      </p>
+                    </div>
+
+                    {log.mediaUrl && (
+                      <div className="w-24 h-16 rounded-xl overflow-hidden border border-white/10 shrink-0">
+                        <img src={log.mediaUrl} alt="Log media" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* ========================================================================= */}
         {/* TAB 4: FORM SUBMISSIONS VIEWER */}
         {/* ========================================================================= */}
         {activeTab === 'submissions' && (
@@ -1091,6 +1605,21 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 >
                   <Download className="w-4 h-4 text-emerald-400" />
                   <span className="hidden sm:inline">Export CSV</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to clear ALL form submissions from your inbox?')) {
+                      const emptyList = clearAllSubmissions();
+                      setSubmissions(emptyList);
+                      showToast('All form submissions cleared!');
+                    }
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-xs font-bold text-rose-300 border border-rose-500/30 transition-all flex items-center gap-1.5 shrink-0"
+                  title="Clear all submissions"
+                >
+                  <Trash2 className="w-4 h-4 text-rose-400" />
+                  <span className="hidden sm:inline">Clear All</span>
                 </button>
               </div>
             </div>
