@@ -286,10 +286,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     console.log('[Admin Auth] Submitting OTP verification code...');
 
     try {
+      const cleanEmail = (authEmail.trim() || AUTHORIZED_GMAIL).toLowerCase();
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: authEmail.trim().toLowerCase(), code: inputCode }),
+        body: JSON.stringify({ email: cleanEmail, code: inputCode }),
       });
 
       console.log(`[Admin Auth] /api/auth/verify-otp HTTP status: ${res.status} ${res.statusText}`);

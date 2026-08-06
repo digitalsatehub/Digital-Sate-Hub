@@ -1,11 +1,32 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import nodemailer from "nodemailer";
 
-// In-memory store for OTPs
-const otpStore: Record<string, { code: string; expiresAt: number }> = {};
+// File-backed OTP cache to survive server restarts/hot reloads
+const OTP_CACHE_FILE = path.join(process.cwd(), ".otp_cache.json");
+
+function getOtpStore(): Record<string, { code: string; expiresAt: number }> {
+  try {
+    if (fs.existsSync(OTP_CACHE_FILE)) {
+      const data = fs.readFileSync(OTP_CACHE_FILE, "utf-8");
+      return JSON.parse(data);
+    }
+  } catch (e) {
+    console.error("Failed to read OTP cache file:", e);
+  }
+  return {};
+}
+
+function saveOtpStore(store: Record<string, { code: string; expiresAt: number }>) {
+  try {
+    fs.writeFileSync(OTP_CACHE_FILE, JSON.stringify(store, null, 2), "utf-8");
+  } catch (e) {
+    console.error("Failed to write OTP cache file:", e);
+  }
+}
 
 async function startServer() {
   const app = express();
@@ -138,16 +159,15 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
   // Authentication - Send OTP
   app.post("/api/auth/send-otp", (req, res) => {
     const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: "Email is required" });
-    }
-
-    const cleanEmail = email.toLowerCase().trim();
+    const cleanEmail = (email || "digitalsatehub@gmail.com").toString().toLowerCase().trim();
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    otpStore[cleanEmail] = {
+
+    const store = getOtpStore();
+    store[cleanEmail] = {
       code,
       expiresAt: Date.now() + 1000 * 60 * 10 // 10 minutes
     };
+    saveOtpStore(store);
 
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM } = process.env;
 
@@ -200,28 +220,38 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
   // Authentication - Verify OTP
   app.post("/api/auth/verify-otp", (req, res) => {
     const { email, code } = req.body;
-    if (!email || !code) {
-      return res.status(400).json({ error: "Email and code are required" });
+    const cleanEmail = (email || "digitalsatehub@gmail.com").toString().toLowerCase().trim();
+    const cleanCode = (code || "").toString().trim();
+
+    if (!cleanCode) {
+      return res.status(400).json({ error: "Verification code is required" });
     }
 
-    const record = otpStore[email.toLowerCase()];
+    const store = getOtpStore();
+    const record = store[cleanEmail];
+
     if (!record) {
-      return res.status(400).json({ error: "No OTP requested for this email" });
+      console.warn(`[OTP Verify Failure] No active OTP found for email: ${cleanEmail}`);
+      return res.status(400).json({ error: "No active code found for this email. Please click resend code." });
     }
 
     if (Date.now() > record.expiresAt) {
-      delete otpStore[email.toLowerCase()];
-      return res.status(400).json({ error: "OTP expired" });
+      delete store[cleanEmail];
+      saveOtpStore(store);
+      return res.status(400).json({ error: "Verification code has expired. Please request a new code." });
     }
 
-    if (record.code !== code) {
-      return res.status(400).json({ error: "Invalid OTP code" });
+    if (record.code.toString().trim() !== cleanCode) {
+      console.warn(`[OTP Verify Mismatch] Code expected: ${record.code}, received: ${cleanCode}`);
+      return res.status(400).json({ error: "Invalid verification code. Please check your email and try again." });
     }
 
     // Clear OTP after successful use
-    delete otpStore[email.toLowerCase()];
+    delete store[cleanEmail];
+    saveOtpStore(store);
     
-    return res.json({ success: true });
+    console.log(`[OTP SUCCESS] Admin successfully authenticated for ${cleanEmail}`);
+    return res.json({ success: true, message: "Authentication successful." });
   });
 
   // Mount Vite middleware in dev mode
