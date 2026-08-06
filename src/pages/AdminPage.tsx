@@ -192,13 +192,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       const contentType = res.headers.get('content-type') || '';
       const text = await res.text();
 
-      // Detect HTML fallback (e.g. when static host like Netlify returns index.html for /api/*)
+      // Detect non-JSON HTML response
       if (text.trim().toLowerCase().startsWith('<!doctype') || text.trim().toLowerCase().startsWith('<html') || !contentType.includes('application/json')) {
-        console.warn('[API Health Check] Static hosting / non-API response detected:', text.slice(0, 80));
+        console.warn('[API Health Check] Non-API response detected:', text.slice(0, 80));
         return {
           ok: false,
-          isStaticHost: true,
-          message: 'Frontend is running in static hosting mode (Node Express backend server not running on host).'
+          message: 'Server backend unavailable.'
         };
       }
 
