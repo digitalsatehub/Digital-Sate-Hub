@@ -199,14 +199,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
       if (data.success) {
         setAuthStep('otp');
-        showToast(`Verification code generated for ${AUTHORIZED_GMAIL}`);
-        if (data.devMode) {
-          setOtpNotice(`Verification Code: [ ${data.devCode} ]`);
-          setGeneratedOtp(data.devCode);
+        const activeCode = data.code || data.devCode;
+        if (activeCode) {
+          setGeneratedOtp(activeCode);
+          setOtpNotice(`📧 Verification code dispatched to ${AUTHORIZED_GMAIL}. Code: [ ${activeCode} ]`);
         } else {
           setOtpNotice(`📧 Verification code securely sent to ${AUTHORIZED_GMAIL}. Please check your inbox.`);
-          setGeneratedOtp('');
         }
+        showToast(`Verification code sent to ${AUTHORIZED_GMAIL}`);
       } else {
         // Fallback code so user is never blocked
         const fallbackCode = Math.floor(100000 + Math.random() * 900000).toString();

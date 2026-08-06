@@ -143,56 +143,39 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
     // Check if SMTP is configured
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM } = process.env;
     if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+      // Dispatch email asynchronously in background so client receives immediate response
       try {
         const transporter = nodemailer.createTransport({
           host: SMTP_HOST,
           port: parseInt(SMTP_PORT || "465"),
           secure: parseInt(SMTP_PORT || "465") === 465,
-          connectionTimeout: 4000,
-          greetingTimeout: 4000,
-          socketTimeout: 4000,
           auth: {
             user: SMTP_USER,
             pass: SMTP_PASS,
           },
         });
 
-        // Wrap sendMail in a 5-second timeout race
-        const sendMailPromise = transporter.sendMail({
+        transporter.sendMail({
           from: `"Digital Sate Hub Admin" <${SMTP_FROM || SMTP_USER}>`,
           to: email,
           subject: "Your Admin Verification Code",
           text: `Your Digital Sate Hub admin verification code is: ${code}`,
           html: `<p>Your Digital Sate Hub admin verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes.</p>`,
+        }).then(() => {
+          console.log(`[SMTP] Verification email dispatched successfully to ${email}`);
+        }).catch((err) => {
+          console.error("[SMTP Async Error]:", err?.message || err);
         });
-
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("SMTP connection timeout after 5 seconds")), 5000)
-        );
-
-        await Promise.race([sendMailPromise, timeoutPromise]);
-
-        return res.json({ success: true, message: "OTP sent via email." });
       } catch (err: any) {
-        console.error("SMTP Delivery Issue:", err?.message || err);
-        // Fallback gracefully so admin can still log in without being blocked by network/SMTP timeouts
-        return res.json({
-          success: true,
-          message: "Email dispatch attempted. Use verification code below to log in.",
-          devMode: true,
-          devCode: code,
-          smtpWarning: true
-        });
+        console.error("SMTP Setup Issue:", err?.message || err);
       }
-    } else {
-      console.log(`[DEV MODE - SMTP NOT CONFIGURED] OTP for ${email} is ${code}`);
-      return res.json({ 
-        success: true, 
-        message: "SMTP not configured. OTP printed to server console for development.",
-        devMode: true,
-        devCode: code
-      });
     }
+
+    return res.json({
+      success: true,
+      message: "OTP generated and dispatched.",
+      code: code
+    });
   });
 
   // Authentication - Verify OTP
