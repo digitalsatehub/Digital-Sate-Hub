@@ -74,7 +74,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     return sessionStorage.getItem('dsh_admin_auth') === 'true';
   });
   const [authStep, setAuthStep] = useState<'email' | 'otp'>('email');
-  const [authEmail, setAuthEmail] = useState('');
+  const [authEmail, setAuthEmail] = useState(AUTHORIZED_GMAIL);
   const [authOtpInput, setAuthOtpInput] = useState('');
   const [authError, setAuthError] = useState('');
   const [isSendingOtp, setIsSendingOtp] = useState(false);
@@ -227,7 +227,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     e.preventDefault();
     setAuthError('');
 
-    const cleanEmail = authEmail.trim().toLowerCase();
+    const cleanEmail = authEmail.replace(/[\s\u200B\u00A0]+/g, '').toLowerCase();
     if (cleanEmail !== AUTHORIZED_GMAIL) {
       setAuthError('Access not granted');
       return;
@@ -235,19 +235,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
     setIsSendingOtp(true);
 
-    // 1. Verify server connectivity first
-    const connectivity = await checkServerConnectivity();
-    if (!connectivity.ok) {
-      console.error('[Admin Auth] Pre-flight connectivity check failed:', connectivity.message);
-      setAuthError('Access not granted');
-      setIsSendingOtp(false);
-      return;
-    }
-
-    console.log(`[Admin Auth] Pre-flight check passed (SMTP status: ${connectivity.smtpConfigured ? 'Configured' : 'Not Configured'}). Requesting OTP...`);
-
-    // 2. Dispatch OTP request
     try {
+      console.log(`[Admin Auth] Dispatching OTP code request to /api/auth/send-otp for ${cleanEmail}...`);
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -304,7 +293,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     console.log('[Admin Auth] Submitting OTP verification code...');
 
     try {
-      const cleanEmail = (authEmail.trim() || AUTHORIZED_GMAIL).toLowerCase();
+      const cleanEmail = (authEmail.replace(/[\s\u200B\u00A0]+/g, '') || AUTHORIZED_GMAIL).toLowerCase();
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
