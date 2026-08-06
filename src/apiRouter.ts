@@ -197,7 +197,7 @@ apiRouter.post("/auth/send-otp", async (req, res) => {
   if (cleanEmail !== "digitalsatehub@gmail.com") {
     console.warn(`[AUTH DENIED] Unauthorized email attempt: ${cleanEmail}`);
     return res.status(403).json({
-      error: `Access restricted to authorized admin account: digitalsatehub@gmail.com (attempted: ${cleanEmail || 'empty'})`,
+      error: "Access denied.",
     });
   }
 
@@ -279,7 +279,7 @@ apiRouter.post("/auth/verify-otp", (req, res) => {
   const cleanCode = (code || "").toString().trim();
 
   if (cleanEmail !== "digitalsatehub@gmail.com") {
-    return res.status(403).json({ error: "Access restricted to authorized admin account: digitalsatehub@gmail.com" });
+    return res.status(403).json({ error: "Access denied." });
   }
 
   if (!cleanCode) {

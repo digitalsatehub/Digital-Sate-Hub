@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { InteractiveBoxGrid } from '../components/InteractiveBoxGrid';
+import { LOGO_URL } from '../data/siteData';
 import {
   getSocialLinks,
   saveSocialLinks,
@@ -73,6 +75,8 @@ interface BroadcastLog {
 const AUTHORIZED_GMAIL = 'digitalsatehub@gmail.com';
 
 export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
+  const loginSectionRef = useRef<HTMLDivElement>(null);
+
   // Authentication State with Authenticator TOTP & Email Backup
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('dsh_admin_auth') === 'true';
@@ -294,7 +298,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     }
 
     if (cleanEmail !== AUTHORIZED_GMAIL) {
-      setAuthError(`Access restricted to authorized admin account: ${AUTHORIZED_GMAIL}. (Entered: ${cleanEmail})`);
+      setAuthError('Access denied.');
       return;
     }
 
@@ -315,7 +319,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
           setGeneratedCode(data.code);
         }
         setAuthStep('otp');
-        setOtpNotice('A 6-digit verification code has been sent to digitalsatehub@gmail.com. Please check your inbox and spam folder.');
+        setOtpNotice('A 6-digit verification code has been sent to your email. Please check your inbox and spam folder.');
         showToast('Verification code sent');
       } else {
         console.error('[Admin Auth] Server error response:', data);
@@ -610,14 +614,17 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   // LOGIN SCREEN - 2FA AUTHENTICATOR & EMAIL BACKUP
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#0b0526] text-white flex items-center justify-center p-4 relative overflow-hidden">
+      <div ref={loginSectionRef} className="min-h-screen bg-[#0b0526] text-white flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Mouse Light Animation Background from Hero Section */}
+        <InteractiveBoxGrid containerRef={loginSectionRef} />
+
         {/* Background ambient glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[180px] pointer-events-none" />
 
-        <div className="w-full max-w-md bg-[#12063B] border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 space-y-6">
+        <div className="w-full max-w-md bg-[#12063B]/90 backdrop-blur-xl border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 space-y-6">
           <div className="text-center space-y-2">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1817B6] to-indigo-600 border border-indigo-400/40 flex items-center justify-center mx-auto text-white shadow-xl shadow-indigo-600/40">
-              <ShieldCheck className="w-8 h-8 text-indigo-200" />
+            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-indigo-400/30 flex items-center justify-center mx-auto shadow-xl overflow-hidden p-2">
+              <img src={LOGO_URL} alt="Digital Sate Hub Logo" className="w-full h-full object-contain" />
             </div>
 
             <h1 className="text-2xl font-black text-white">Digital Sate Hub Admin</h1>
@@ -764,21 +771,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                       <input
                         type="email"
                         required
-                        placeholder="e.g. digitalsatehub@gmail.com"
                         value={authEmail}
                         onChange={(e) => setAuthEmail(e.target.value)}
-                        className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-white placeholder-gray-500 focus:outline-none focus:border-indigo-400"
+                        className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-white focus:outline-none focus:border-indigo-400"
                       />
                     </div>
                     <div className="flex items-center justify-between mt-1.5 px-0.5">
                       <span className="text-[10px] text-gray-400">Restricted to authorized administrator</span>
-                      <button
-                        type="button"
-                        onClick={() => setAuthEmail('digitalsatehub@gmail.com')}
-                        className="text-[10px] font-semibold text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
-                      >
-                        Fill Admin Email
-                      </button>
                     </div>
                   </div>
 
@@ -817,23 +816,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                         className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 pl-10 pr-4 text-center text-lg font-mono tracking-widest text-white focus:outline-none focus:border-indigo-400"
                       />
                     </div>
-                    {generatedCode && (
-                      <div className="flex items-center justify-between mt-2 px-1 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2">
-                        <span className="text-[11px] text-emerald-200">
-                          Session Code:{' '}
-                          <strong className="font-mono text-emerald-300 tracking-wider text-xs ml-1">
-                            {generatedCode}
-                          </strong>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setAuthOtpInput(generatedCode)}
-                          className="text-[11px] font-bold text-emerald-300 hover:text-white bg-emerald-600/40 hover:bg-emerald-600/70 px-2.5 py-1 rounded transition-colors cursor-pointer"
-                        >
-                          Auto-Fill Code
-                        </button>
-                      </div>
-                    )}
                   </div>
 
                   <button
@@ -850,6 +832,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                       setAuthStep('email');
                       setAuthOtpInput('');
                       setAuthError('');
+                      setOtpNotice(null);
                     }}
                     className="w-full py-2 text-center text-xs text-gray-400 hover:text-white transition-colors cursor-pointer"
                   >
