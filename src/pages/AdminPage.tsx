@@ -194,13 +194,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         return { ok: false, message: `Server returned HTTP ${res.status}` };
       }
 
-      const contentType = res.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        console.warn('[API Health Check] Received non-JSON response from /api/health:', contentType);
-        // Fallback: If HTTP 200 is returned, consider server alive
-        return { ok: true, smtpConfigured: true };
-      }
-
       const data = await res.json();
       console.log('[API Health Check] Server reachable:', data);
       return { ok: true, smtpConfigured: data.smtpConfigured };
@@ -208,9 +201,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       console.error('[API Health Check Exception]:', {
         name: err?.name,
         message: err?.message,
+        cause: err?.cause,
       });
-      // Soft check: return ok: true to allow main fetch attempt if abort/fetch glitch
-      return { ok: true, message: err?.message };
+      return { ok: false, message: err?.name === 'AbortError' ? 'Server connection timed out' : (err?.message || 'Failed to reach server') };
     }
   };
 
@@ -227,34 +220,35 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
     setIsSendingOtp(true);
 
-    // 1. Soft pre-flight check
+    // 1. Verify server connectivity first
     const connectivity = await checkServerConnectivity();
     if (!connectivity.ok) {
-      console.warn('[Admin Auth] Pre-flight connectivity warning:', connectivity.message);
+      console.error('[Admin Auth] Pre-flight connectivity check failed:', connectivity.message);
+      setAuthError(`Network Error: Cannot connect to server backend (${connectivity.message}). Please check your connection and try again.`);
+      setIsSendingOtp(false);
+      return;
     }
+
+    console.log(`[Admin Auth] Pre-flight check passed (SMTP status: ${connectivity.smtpConfigured ? 'Configured' : 'Not Configured'}). Requesting OTP...`);
 
     // 2. Dispatch OTP request
     try {
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: cleanEmail }),
       });
 
       console.log(`[Admin Auth] /api/auth/send-otp HTTP status: ${res.status} ${res.statusText}`);
 
-      const contentType = res.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        const textResp = await res.text();
-        console.error('[Admin Auth] Non-JSON response from /api/auth/send-otp:', textResp.substring(0, 150));
-        setAuthError('Server communication error: Expected JSON response.');
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        console.error('[Admin Auth] Failed to parse JSON response:', jsonErr);
+        setAuthError('Invalid server response format.');
         return;
       }
-
-      const data = await res.json();
 
       if (res.ok && data.success) {
         console.log('[Admin Auth] OTP dispatch successful:', data.message);
@@ -269,6 +263,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       console.error('[Admin Auth Fetch Exception]:', {
         name: err?.name,
         message: err?.message,
+        cause: err?.cause,
+        stack: err?.stack
       });
       setAuthError(`Network error: ${err?.message || 'Failed to reach server'}. Please try again.`);
     } finally {
@@ -293,24 +289,20 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       const cleanEmail = (authEmail.trim() || AUTHORIZED_GMAIL).toLowerCase();
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: cleanEmail, code: inputCode }),
       });
 
       console.log(`[Admin Auth] /api/auth/verify-otp HTTP status: ${res.status} ${res.statusText}`);
 
-      const contentType = res.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        const textResp = await res.text();
-        console.error('[Admin Auth] Non-JSON response from /api/auth/verify-otp:', textResp.substring(0, 150));
-        setAuthError('Server communication error: Expected JSON response.');
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        console.error('[Admin Auth] Failed to parse verification JSON response:', jsonErr);
+        setAuthError('Invalid server response format.');
         return;
       }
-
-      const data = await res.json();
 
       if (res.ok && data.success) {
         console.log('[Admin Auth] Verification successful.');
@@ -325,6 +317,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       console.error('[Admin Auth Verify Fetch Exception]:', {
         name: err?.name,
         message: err?.message,
+        cause: err?.cause,
       });
       setAuthError(`Network error: ${err?.message || 'Failed to verify code'}.`);
     }
