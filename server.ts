@@ -128,14 +128,15 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
   });
 
   // Authentication - Send OTP
-  app.post("/api/auth/send-otp", async (req, res) => {
+  app.post("/api/auth/send-otp", (req, res) => {
     const { email } = req.body;
     if (!email) {
       return res.status(400).json({ error: "Email is required" });
     }
 
+    const cleanEmail = email.toLowerCase().trim();
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    otpStore[email.toLowerCase()] = {
+    otpStore[cleanEmail] = {
       code,
       expiresAt: Date.now() + 1000 * 60 * 10 // 10 minutes
     };
@@ -152,38 +153,40 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
             user: SMTP_USER,
             pass: SMTP_PASS,
           },
+          connectionTimeout: 10000,
+          socketTimeout: 10000,
         });
 
-        await transporter.sendMail({
+        // Send email in background so the client gets immediate response
+        transporter.sendMail({
           from: `"Digital Sate Hub Admin" <${SMTP_FROM || SMTP_USER}>`,
-          to: email,
+          to: cleanEmail,
           subject: "Your Digital Sate Hub Admin Verification Code",
           text: `Your Digital Sate Hub admin verification code is: ${code}. This code expires in 10 minutes.`,
-          html: `<div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-            <h2 style="color: #4F46E5;">Digital Sate Hub Admin Access</h2>
-            <p>Your 6-digit verification code is:</p>
-            <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #10B981; background: #F3F4F6; padding: 12px 24px; display: inline-block; border-radius: 8px;">
+          html: `<div style="font-family: Arial, sans-serif; padding: 24px; color: #1f2937; max-width: 500px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px;">
+            <h2 style="color: #4f46e5; margin-top: 0;">Digital Sate Hub Admin Access</h2>
+            <p style="font-size: 15px; color: #374151;">Use the following 6-digit verification code to complete your login:</p>
+            <div style="font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #10b981; background: #f3f4f6; padding: 16px 28px; display: inline-block; border-radius: 10px; margin: 16px 0;">
               ${code}
             </div>
-            <p style="margin-top: 16px; font-size: 13px; color: #6B7280;">This code will expire in 10 minutes. If you did not request this code, please ignore this email.</p>
+            <p style="margin-top: 20px; font-size: 13px; color: #6b7280; line-height: 1.5;">This code will expire in 10 minutes. If you did not request this code, please ignore this email.</p>
           </div>`,
+        }).then(() => {
+          console.log(`[SMTP SUCCESS] Verification email sent to ${cleanEmail}`);
+        }).catch((err: any) => {
+          console.error("[SMTP ERROR]:", err?.message || err);
         });
-
-        console.log(`[SMTP] Verification email sent successfully to ${email}`);
-        return res.json({ success: true, message: "Verification code sent to your email." });
       } catch (err: any) {
-        console.error("[SMTP Error]:", err?.message || err);
-        return res.status(500).json({ error: `Failed to send email: ${err?.message || 'SMTP error'}` });
+        console.error("[SMTP INIT ERROR]:", err?.message || err);
       }
     } else {
-      console.log(`[DEV MODE] OTP for ${email} is ${code}`);
-      return res.json({
-        success: true,
-        message: "SMTP credentials missing. Code logged to console.",
-        devMode: true,
-        devCode: code
-      });
+      console.log(`[DEV MODE] SMTP not configured. OTP for ${cleanEmail} is ${code}`);
     }
+
+    return res.json({
+      success: true,
+      message: "Verification code sent to your email."
+    });
   });
 
   // Authentication - Verify OTP

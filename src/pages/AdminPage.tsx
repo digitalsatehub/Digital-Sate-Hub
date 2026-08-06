@@ -247,7 +247,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     setAuthStep('email');
     setAuthEmail('');
     setAuthOtpInput('');
-    setGeneratedOtp('');
     setOtpNotice(null);
   };
 
