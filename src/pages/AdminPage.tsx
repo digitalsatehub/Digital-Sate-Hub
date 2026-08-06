@@ -487,10 +487,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                   <input
                     type="email"
                     required
-                    placeholder="digitalsatehub@gmail.com"
                     value={authEmail}
                     onChange={(e) => setAuthEmail(e.target.value)}
-                    className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-white placeholder-gray-500 focus:outline-none focus:border-indigo-400"
+                    className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-white focus:outline-none focus:border-indigo-400"
                   />
                 </div>
               </div>
@@ -511,14 +510,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                     <span>Send Verification Code to Gmail</span>
                   </>
                 )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAuthEmail(AUTHORIZED_GMAIL)}
-                className="w-full py-2 text-center text-xs font-semibold text-indigo-300 hover:text-white transition-colors underline"
-              >
-                Autofill {AUTHORIZED_GMAIL}
               </button>
             </form>
           ) : (
