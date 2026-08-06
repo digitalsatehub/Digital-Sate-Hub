@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StrategyCallFormData } from '../types';
 import { SERVICES_LIST } from '../data/siteData';
+import { addFormSubmission } from '../lib/adminStore';
 import {
   X,
   Calendar,
@@ -43,6 +44,19 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) =
     setLoading(true);
 
     try {
+      addFormSubmission({
+        type: 'booking',
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        businessName: formData.businessName,
+        websiteUrl: formData.websiteUrl,
+        serviceRequested: formData.serviceRequested,
+        preferredDate: formData.preferredDate,
+        preferredTime: formData.preferredTime,
+        message: formData.message
+      });
+
       await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -61,7 +61,7 @@ export const AboutUsSection: React.FC<AboutUsSectionProps> = ({ onOpenBooking })
   };
 
   return (
-    <section ref={sectionRef} id="about-us-section" className="py-20 lg:py-28 bg-[#12063B] text-white relative overflow-hidden border-t border-indigo-900/40">
+    <section ref={sectionRef} id="about-us-section" className="py-10 lg:py-14 bg-[#12063B] text-white relative overflow-hidden border-t border-indigo-900/40">
       {/* Background Subtle Glowing Accents */}
       <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />

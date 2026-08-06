@@ -1,4 +1,4 @@
-export type NavigationPage = 'home' | 'portfolio' | 'blog' | 'contact' | 'quote';
+export type NavigationPage = 'home' | 'portfolio' | 'blog' | 'contact' | 'quote' | 'admin';
 
 export interface ServiceItem {
   id: string;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AIStrategyResult } from '../types';
+import { addFormSubmission } from '../lib/adminStore';
 import {
   X,
   Calculator,
@@ -98,6 +99,19 @@ export const QuoteBuilderModal: React.FC<QuoteBuilderModalProps> = ({
   const handleSubmitQuoteRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      addFormSubmission({
+        type: 'quote',
+        name: businessName || 'Valued Client',
+        email,
+        phone,
+        businessName,
+        websiteUrl,
+        serviceRequested: selectedServices.join(', '),
+        estimatedBudget: budget,
+        timeline,
+        message: `Industry: ${industry}`
+      });
+
       await fetch('/api/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

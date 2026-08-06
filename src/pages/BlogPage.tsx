@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { BLOG_POSTS } from '../data/siteData';
+import React, { useState, useEffect, useRef } from 'react';
+import { getAdminBlogPosts } from '../lib/adminStore';
 import { BlogPost } from '../types';
 import { InteractiveBoxGrid } from '../components/InteractiveBoxGrid';
 import {
@@ -23,13 +23,18 @@ interface BlogPageProps {
 
 export const BlogPage: React.FC<BlogPageProps> = ({ onOpenBooking }) => {
   const heroRef = useRef<HTMLDivElement>(null);
+  const [posts, setPosts] = useState<BlogPost[]>(getAdminBlogPosts());
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('All');
 
+  useEffect(() => {
+    setPosts(getAdminBlogPosts());
+  }, []);
+
   const allTags = ['All', 'Conversion', 'Sales Funnels', 'GoHighLevel', 'CRM', 'AI Agents', 'Automation'];
 
-  const filteredPosts = BLOG_POSTS.filter((post) => {
+  const filteredPosts = posts.filter((post) => {
     const matchesSearch =
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
@@ -42,19 +47,19 @@ export const BlogPage: React.FC<BlogPageProps> = ({ onOpenBooking }) => {
 
   // Calculate current post index for Previous/Next post navigation
   const currentPostIndex = selectedPost
-    ? BLOG_POSTS.findIndex((p) => p.id === selectedPost.id)
+    ? posts.findIndex((p) => p.id === selectedPost.id)
     : -1;
 
   const handlePrevPost = () => {
     if (currentPostIndex === -1) return;
-    const prevIdx = (currentPostIndex - 1 + BLOG_POSTS.length) % BLOG_POSTS.length;
-    setSelectedPost(BLOG_POSTS[prevIdx]);
+    const prevIdx = (currentPostIndex - 1 + posts.length) % posts.length;
+    setSelectedPost(posts[prevIdx]);
   };
 
   const handleNextPost = () => {
     if (currentPostIndex === -1) return;
-    const nextIdx = (currentPostIndex + 1) % BLOG_POSTS.length;
-    setSelectedPost(BLOG_POSTS[nextIdx]);
+    const nextIdx = (currentPostIndex + 1) % posts.length;
+    setSelectedPost(posts[nextIdx]);
   };
 
   return (
@@ -224,7 +229,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({ onOpenBooking }) => {
               </div>
 
               <div className="text-[11px] font-semibold text-indigo-300">
-                Post {currentPostIndex + 1} of {BLOG_POSTS.length}
+                Post {currentPostIndex + 1} of {posts.length}
               </div>
 
               <button

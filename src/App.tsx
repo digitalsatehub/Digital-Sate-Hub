@@ -20,6 +20,7 @@ import { FinalCTASection } from './components/FinalCTASection';
 import { PortfolioPage } from './pages/PortfolioPage';
 import { BlogPage } from './pages/BlogPage';
 import { ContactPage } from './pages/ContactPage';
+import { AdminPage } from './pages/AdminPage';
 
 // Interactive Modals
 import { BookingModal } from './components/BookingModal';
@@ -27,7 +28,14 @@ import { QuoteBuilderModal } from './components/QuoteBuilderModal';
 import { LegalModals } from './components/LegalModals';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<NavigationPage>('home');
+  const [currentPage, setCurrentPage] = useState<NavigationPage>(() => {
+    const hash = window.location.hash.toLowerCase();
+    const path = window.location.pathname.toLowerCase();
+    if (hash === '#admin' || hash === '#joju' || path.includes('/admin') || path.includes('/joju')) {
+      return 'admin';
+    }
+    return 'admin'; // Set to 'admin' as requested by user
+  });
 
   // Modal controls
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -42,6 +50,14 @@ export default function App() {
   const handleNavigate = (page: NavigationPage) => {
     setCurrentPage(page);
   };
+
+  if (currentPage === 'admin') {
+    return (
+      <div className="min-h-screen bg-[#070219] font-sans text-white">
+        <AdminPage onNavigate={handleNavigate} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#12063B] font-sans text-white selection:bg-indigo-500 selection:text-white flex flex-col justify-between">

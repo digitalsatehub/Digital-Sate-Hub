@@ -137,6 +137,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <video
             ref={videoRef}
             src={currentVideoUrl}
+            poster="https://res.cloudinary.com/ug0d8nwi/image/upload/v1785974700/Digital_Thubmnail_omofjw.png"
             loop
             controls
             playsInline

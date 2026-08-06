@@ -1,7 +1,7 @@
-import React from 'react';
-import { BLOG_POSTS } from '../data/siteData';
+import React, { useState, useEffect } from 'react';
+import { getAdminBlogPosts } from '../lib/adminStore';
+import { BlogPost, NavigationPage } from '../types';
 import { ArrowRight, BookOpen, Clock, Tag } from 'lucide-react';
-import { NavigationPage } from '../types';
 import { motion } from 'motion/react';
 
 interface FeaturedBlogSectionProps {
@@ -9,8 +9,14 @@ interface FeaturedBlogSectionProps {
 }
 
 export const FeaturedBlogSection: React.FC<FeaturedBlogSectionProps> = ({ onNavigate }) => {
+  const [blogs, setBlogs] = useState<BlogPost[]>([]);
+
+  useEffect(() => {
+    setBlogs(getAdminBlogPosts());
+  }, []);
+
   // Take exactly 3 blog articles
-  const topBlogs = BLOG_POSTS.slice(0, 3);
+  const topBlogs = blogs.slice(0, 3);
 
   return (
     <section className="py-20 lg:py-28 bg-[#0b0526] text-white relative border-t border-indigo-900/50 overflow-hidden">

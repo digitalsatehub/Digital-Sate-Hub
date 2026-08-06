@@ -2,6 +2,10 @@ import React from 'react';
 
 export const PARTNER_LOGOS = [
   {
+    name: 'Logo 1',
+    url: 'https://res.cloudinary.com/ug0d8nwi/image/upload/v1785974810/Logo_1_exy8ke.png'
+  },
+  {
     name: 'Platform Logo 1',
     url: 'https://res.cloudinary.com/ug0d8nwi/image/upload/v1785840462/idZCBxuvGS_logos_isadia.png'
   },
@@ -33,7 +37,7 @@ export const SocialProofCounters: React.FC = () => {
   ];
 
   return (
-    <section className="bg-white text-slate-900 border-y border-slate-200/80 py-6 sm:py-8 relative overflow-hidden shadow-sm">
+    <section className="bg-white text-slate-900 border-y border-slate-200/80 py-3 sm:py-4 relative overflow-hidden shadow-sm">
       <div className="w-full">
         {/* Continuous Flow Logo Marquee - Full section width directly on white background */}
         <div className="relative w-full overflow-hidden py-2">

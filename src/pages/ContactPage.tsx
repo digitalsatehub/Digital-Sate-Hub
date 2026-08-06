@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { InteractiveBoxGrid } from '../components/InteractiveBoxGrid';
 import { VideoTestimonials } from '../components/VideoTestimonials';
+import { addFormSubmission } from '../lib/adminStore';
 import {
   Mail,
   Calendar,
@@ -37,6 +38,17 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onOpenBooking, onOpenQ
     e.preventDefault();
     setLoading(true);
     try {
+      addFormSubmission({
+        type: 'contact',
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        businessName: formData.businessName,
+        websiteUrl: formData.websiteUrl,
+        serviceRequested: formData.serviceRequested,
+        message: formData.message
+      });
+
       await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
