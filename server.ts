@@ -140,10 +140,9 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
       expiresAt: Date.now() + 1000 * 60 * 10 // 10 minutes
     };
 
-    // Check if SMTP is configured
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM } = process.env;
+
     if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
-      // Dispatch email asynchronously in background so client receives immediate response
       try {
         const transporter = nodemailer.createTransport({
           host: SMTP_HOST,
@@ -155,27 +154,36 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
           },
         });
 
-        transporter.sendMail({
+        await transporter.sendMail({
           from: `"Digital Sate Hub Admin" <${SMTP_FROM || SMTP_USER}>`,
           to: email,
-          subject: "Your Admin Verification Code",
-          text: `Your Digital Sate Hub admin verification code is: ${code}`,
-          html: `<p>Your Digital Sate Hub admin verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes.</p>`,
-        }).then(() => {
-          console.log(`[SMTP] Verification email dispatched successfully to ${email}`);
-        }).catch((err) => {
-          console.error("[SMTP Async Error]:", err?.message || err);
+          subject: "Your Digital Sate Hub Admin Verification Code",
+          text: `Your Digital Sate Hub admin verification code is: ${code}. This code expires in 10 minutes.`,
+          html: `<div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+            <h2 style="color: #4F46E5;">Digital Sate Hub Admin Access</h2>
+            <p>Your 6-digit verification code is:</p>
+            <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #10B981; background: #F3F4F6; padding: 12px 24px; display: inline-block; border-radius: 8px;">
+              ${code}
+            </div>
+            <p style="margin-top: 16px; font-size: 13px; color: #6B7280;">This code will expire in 10 minutes. If you did not request this code, please ignore this email.</p>
+          </div>`,
         });
-      } catch (err: any) {
-        console.error("SMTP Setup Issue:", err?.message || err);
-      }
-    }
 
-    return res.json({
-      success: true,
-      message: "OTP generated and dispatched.",
-      code: code
-    });
+        console.log(`[SMTP] Verification email sent successfully to ${email}`);
+        return res.json({ success: true, message: "Verification code sent to your email." });
+      } catch (err: any) {
+        console.error("[SMTP Error]:", err?.message || err);
+        return res.status(500).json({ error: `Failed to send email: ${err?.message || 'SMTP error'}` });
+      }
+    } else {
+      console.log(`[DEV MODE] OTP for ${email} is ${code}`);
+      return res.json({
+        success: true,
+        message: "SMTP credentials missing. Code logged to console.",
+        devMode: true,
+        devCode: code
+      });
+    }
   });
 
   // Authentication - Verify OTP
