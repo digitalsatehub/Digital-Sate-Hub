@@ -175,6 +175,38 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  // Helper to check server connectivity before sending requests
+  const checkServerConnectivity = async (): Promise<{ ok: boolean; smtpConfigured?: boolean; message?: string }> => {
+    try {
+      console.log('[API Health Check] Verifying server connectivity at /api/health...');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      const res = await fetch('/api/health', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        console.error(`[API Health Check] Server responded with HTTP status ${res.status} ${res.statusText}`);
+        return { ok: false, message: `Server returned HTTP ${res.status}` };
+      }
+
+      const data = await res.json();
+      console.log('[API Health Check] Server reachable:', data);
+      return { ok: true, smtpConfigured: data.smtpConfigured };
+    } catch (err: any) {
+      console.error('[API Health Check Exception]:', {
+        name: err?.name,
+        message: err?.message,
+        cause: err?.cause,
+      });
+      return { ok: false, message: err?.name === 'AbortError' ? 'Server connection timed out' : (err?.message || 'Failed to reach server') };
+    }
+  };
+
   // Gmail OTP Send Handler
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,23 +220,53 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
     setIsSendingOtp(true);
 
+    // 1. Verify server connectivity first
+    const connectivity = await checkServerConnectivity();
+    if (!connectivity.ok) {
+      console.error('[Admin Auth] Pre-flight connectivity check failed:', connectivity.message);
+      setAuthError(`Network Error: Cannot connect to server backend (${connectivity.message}). Please check your connection and try again.`);
+      setIsSendingOtp(false);
+      return;
+    }
+
+    console.log(`[Admin Auth] Pre-flight check passed (SMTP status: ${connectivity.smtpConfigured ? 'Configured' : 'Not Configured'}). Requesting OTP...`);
+
+    // 2. Dispatch OTP request
     try {
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: cleanEmail }),
       });
-      const data = await res.json();
 
-      if (data.success) {
+      console.log(`[Admin Auth] /api/auth/send-otp HTTP status: ${res.status} ${res.statusText}`);
+
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        console.error('[Admin Auth] Failed to parse JSON response:', jsonErr);
+        setAuthError('Invalid server response format.');
+        return;
+      }
+
+      if (res.ok && data.success) {
+        console.log('[Admin Auth] OTP dispatch successful:', data.message);
         setAuthStep('otp');
         setOtpNotice(`A 6-digit verification code has been sent to ${AUTHORIZED_GMAIL}. Please check your Gmail inbox (and spam folder).`);
         showToast(`Verification code sent to ${AUTHORIZED_GMAIL}`);
       } else {
+        console.error('[Admin Auth] Server returned error payload:', data);
         setAuthError(data.error || 'Failed to send verification code.');
       }
-    } catch (err) {
-      setAuthError('Network error. Failed to reach server. Please try again.');
+    } catch (err: any) {
+      console.error('[Admin Auth Fetch Exception]:', {
+        name: err?.name,
+        message: err?.message,
+        cause: err?.cause,
+        stack: err?.stack
+      });
+      setAuthError(`Network error: ${err?.message || 'Failed to reach server'}. Please try again.`);
     } finally {
       setIsSendingOtp(false);
     }
@@ -221,23 +283,42 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       return;
     }
 
+    console.log('[Admin Auth] Submitting OTP verification code...');
+
     try {
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: authEmail.trim().toLowerCase(), code: inputCode }),
       });
-      const data = await res.json();
 
-      if (data.success) {
+      console.log(`[Admin Auth] /api/auth/verify-otp HTTP status: ${res.status} ${res.statusText}`);
+
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        console.error('[Admin Auth] Failed to parse verification JSON response:', jsonErr);
+        setAuthError('Invalid server response format.');
+        return;
+      }
+
+      if (res.ok && data.success) {
+        console.log('[Admin Auth] Verification successful.');
         setIsAuthenticated(true);
         sessionStorage.setItem('dsh_admin_auth', 'true');
         showToast(`Authenticated as ${AUTHORIZED_GMAIL}`);
       } else {
+        console.error('[Admin Auth] Verification error:', data);
         setAuthError(data.error || 'Invalid verification code. Please check your email and try again.');
       }
-    } catch (err) {
-      setAuthError('Network error. Failed to verify code.');
+    } catch (err: any) {
+      console.error('[Admin Auth Verify Fetch Exception]:', {
+        name: err?.name,
+        message: err?.message,
+        cause: err?.cause,
+      });
+      setAuthError(`Network error: ${err?.message || 'Failed to verify code'}.`);
     }
   };
 

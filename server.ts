@@ -29,9 +29,17 @@ async function startServer() {
     });
   };
 
-  // Health check endpoint
+  // Health check endpoint with diagnostic info
   app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", app: "Digital Sate Hub API" });
+    const { SMTP_HOST, SMTP_USER, SMTP_PASS } = process.env;
+    const smtpConfigured = !!(SMTP_HOST && SMTP_USER && SMTP_PASS);
+    res.json({
+      status: "ok",
+      app: "Digital Sate Hub API",
+      timestamp: new Date().toISOString(),
+      smtpConfigured,
+      smtpHost: SMTP_HOST || null
+    });
   });
 
   // AI Strategy & Funnel Audit Endpoint
