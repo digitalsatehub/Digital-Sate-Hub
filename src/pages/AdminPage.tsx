@@ -735,17 +735,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 )}
               </button>
 
-              {/* Setup / QR Code Button */}
-              <div className="pt-2 border-t border-indigo-500/20 text-center">
-                <button
-                  type="button"
-                  onClick={() => setShowTotpSetupModal(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-300 hover:text-white bg-indigo-900/40 hover:bg-indigo-900/70 border border-indigo-500/40 px-3.5 py-2 rounded-xl transition-all cursor-pointer"
-                >
-                  <QrCode className="w-4 h-4 text-indigo-400" />
-                  <span>Setup Authenticator / Scan QR Code</span>
-                </button>
-              </div>
+
             </form>
           ) : (
             /* EMAIL BACKUP CODE FLOW */
