@@ -187,7 +187,7 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Bottom Legal & Copyright Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
           <div>
-            © {new Date().getFullYear()} Digital Sate Hub. All Rights Reserved. Built for Business Growth.
+            © {new Date().getFullYear()} <span onClick={() => onNavigate('admin')} className="cursor-pointer hover:text-gray-400 transition-colors" title="Digital Sate Hub">Digital Sate Hub</span>. All Rights Reserved. Built for Business Growth.
           </div>
 
           <div className="flex items-center gap-6">
@@ -207,15 +207,6 @@ export const Footer: React.FC<FooterProps> = ({
             >
               <FileText className="w-3.5 h-3.5 text-indigo-400" />
               <span>Terms & Conditions</span>
-            </button>
-
-            <button
-              onClick={() => onNavigate('admin')}
-              className="hover:text-amber-300 transition-colors flex items-center gap-1 text-amber-400/90 font-medium"
-              id="admin-portal-link"
-            >
-              <Lock className="w-3.5 h-3.5 text-amber-400" />
-              <span>Admin Studio</span>
             </button>
           </div>
         </div>

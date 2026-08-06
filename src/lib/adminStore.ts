@@ -222,43 +222,81 @@ export function deleteFormSubmission(id: string): FormSubmission[] {
   return updated;
 }
 
+// Initial clean analytics state template
+function createEmptyAnalyticsStats(): AnalyticsStats {
+  const submissions = getFormSubmissions();
+  return {
+    totalVisitors: 0,
+    totalPageViews: 0,
+    totalSubmissions: submissions.length,
+    conversionRate: 0,
+    pageViewsByPage: [
+      { page: 'Home Page', views: 0 },
+      { page: 'Portfolio & Case Studies', views: 0 },
+      { page: 'Blog & Insights', views: 0 },
+      { page: 'Contact & Booking', views: 0 },
+      { page: 'AI Scope Builder', views: 0 }
+    ],
+    dailyViews: [
+      { date: 'Mon', views: 0, visitors: 0 },
+      { date: 'Tue', views: 0, visitors: 0 },
+      { date: 'Wed', views: 0, visitors: 0 },
+      { date: 'Thu', views: 0, visitors: 0 },
+      { date: 'Fri', views: 0, visitors: 0 },
+      { date: 'Sat', views: 0, visitors: 0 },
+      { date: 'Sun', views: 0, visitors: 0 }
+    ],
+    recentActivities: []
+  };
+}
+
 // Track page view event for analytics
 export function recordPageView(pageName: string): void {
   try {
+    const submissions = getFormSubmissions();
     const raw = localStorage.getItem(ANALYTICS_KEY);
-    let stats: AnalyticsStats = raw
-      ? JSON.parse(raw)
-      : {
-          totalVisitors: 1240,
-          totalPageViews: 3890,
-          totalSubmissions: 28,
-          conversionRate: 4.8,
-          pageViewsByPage: [
-            { page: 'Home Page', views: 1840 },
-            { page: 'Portfolio & Case Studies', views: 980 },
-            { page: 'Blog & Articles', views: 560 },
-            { page: 'Contact & Booking', views: 320 },
-            { page: 'AI Quote Builder', views: 190 }
-          ],
-          dailyViews: [
-            { date: 'Mon', views: 320, visitors: 110 },
-            { date: 'Tue', views: 450, visitors: 160 },
-            { date: 'Wed', views: 520, visitors: 190 },
-            { date: 'Thu', views: 610, visitors: 220 },
-            { date: 'Fri', views: 580, visitors: 210 },
-            { date: 'Sat', views: 390, visitors: 140 },
-            { date: 'Sun', views: 420, visitors: 150 }
-          ],
-          recentActivities: []
-        };
+    let stats: AnalyticsStats = raw ? JSON.parse(raw) : createEmptyAnalyticsStats();
+
+    // Track session visitor once per session
+    const sessionKey = 'dsh_visited_session';
+    const isNewSession = !sessionStorage.getItem(sessionKey);
+    if (isNewSession) {
+      sessionStorage.setItem(sessionKey, 'true');
+      stats.totalVisitors += 1;
+    }
 
     stats.totalPageViews += 1;
-    const item = stats.pageViewsByPage.find((p) => p.page.toLowerCase().includes(pageName.toLowerCase()));
-    if (item) {
-      item.views += 1;
+    stats.totalSubmissions = submissions.length;
+    stats.conversionRate = stats.totalPageViews > 0 
+      ? Number(((submissions.length / stats.totalPageViews) * 100).toFixed(1)) 
+      : 0;
+
+    // Update page breakdowns
+    const pageIndex = stats.pageViewsByPage.findIndex((p) => p.page.toLowerCase().includes(pageName.toLowerCase()));
+    if (pageIndex >= 0) {
+      stats.pageViewsByPage[pageIndex].views += 1;
     } else {
       stats.pageViewsByPage.push({ page: pageName, views: 1 });
     }
+
+    // Update today's view count in daily views
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const todayName = days[new Date().getDay()];
+    const dayItem = stats.dailyViews.find((d) => d.date === todayName);
+    if (dayItem) {
+      dayItem.views += 1;
+      if (isNewSession) dayItem.visitors += 1;
+    }
+
+    // Add activity log entry
+    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const newLog = {
+      id: `act-${Date.now()}`,
+      event: `Page visit recorded: ${pageName}`,
+      time: `Today at ${timestamp}`,
+      type: 'info' as const
+    };
+    stats.recentActivities = [newLog, ...(stats.recentActivities || []).slice(0, 9)];
 
     localStorage.setItem(ANALYTICS_KEY, JSON.stringify(stats));
   } catch (err) {
@@ -275,33 +313,17 @@ export function getAnalyticsStats(): AnalyticsStats {
     console.error('Error getting analytics stats:', err);
   }
 
-  const submissions = getFormSubmissions();
-  return {
-    totalVisitors: 1420 + submissions.length * 3,
-    totalPageViews: 4210 + submissions.length * 8,
-    totalSubmissions: submissions.length + 15,
-    conversionRate: 5.2,
-    pageViewsByPage: [
-      { page: 'Home Page', views: 1980 },
-      { page: 'Portfolio & Case Studies', views: 1120 },
-      { page: 'Blog & Insights', views: 640 },
-      { page: 'Contact & Booking', views: 410 },
-      { page: 'AI Scope Builder', views: 230 }
-    ],
-    dailyViews: [
-      { date: 'Mon', views: 340, visitors: 120 },
-      { date: 'Tue', views: 480, visitors: 175 },
-      { date: 'Wed', views: 590, visitors: 210 },
-      { date: 'Thu', views: 680, visitors: 245 },
-      { date: 'Fri', views: 620, visitors: 230 },
-      { date: 'Sat', views: 410, visitors: 155 },
-      { date: 'Sun', views: 450, visitors: 165 }
-    ],
-    recentActivities: [
-      { id: 'act-1', event: 'New Contact Submission received from Marcus Vance', time: '10 mins ago', type: 'success' },
-      { id: 'act-2', event: 'Strategy Booking scheduled by Sarah Jenkins', time: '45 mins ago', type: 'info' },
-      { id: 'act-3', event: 'Blog Post "High-Converting Sales Funnels" updated', time: '2 hours ago', type: 'info' },
-      { id: 'act-4', event: 'AI Scope Quote requested by Lumina E-Commerce', time: '5 hours ago', type: 'alert' }
-    ]
-  };
+  const initial = createEmptyAnalyticsStats();
+  return initial;
+}
+
+// Reset / Clear Analytics Stats
+export function clearAnalyticsStats(): AnalyticsStats {
+  const clean = createEmptyAnalyticsStats();
+  try {
+    localStorage.setItem(ANALYTICS_KEY, JSON.stringify(clean));
+  } catch (err) {
+    console.error('Error clearing analytics stats:', err);
+  }
+  return clean;
 }

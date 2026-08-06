@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationPage } from './types';
+import { recordPageView } from './lib/adminStore';
 
 // Global Header & Footer
 import { Header } from './components/Header';
@@ -34,7 +35,7 @@ export default function App() {
     if (hash === '#admin' || hash === '#joju' || path.includes('/admin') || path.includes('/joju')) {
       return 'admin';
     }
-    return 'admin'; // Set to 'admin' as requested by user
+    return 'home';
   });
 
   // Modal controls
@@ -42,10 +43,54 @@ export default function App() {
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
   const [legalType, setLegalType] = useState<'privacy' | 'terms' | null>(null);
 
-  // Scroll to top on page change
+  // Record real analytics page view & scroll to top on page change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (currentPage !== 'admin') {
+      recordPageView(currentPage);
+    }
   }, [currentPage]);
+
+  // Listen for URL changes (#joju, #admin, /joju, /admin) and secret key sequence 'joju'
+  useEffect(() => {
+    const checkUrlForAdmin = () => {
+      const hash = window.location.hash.toLowerCase();
+      const path = window.location.pathname.toLowerCase();
+      if (hash === '#admin' || hash === '#joju' || path.endsWith('/admin') || path.endsWith('/joju') || path.includes('/joju') || path.includes('/admin')) {
+        setCurrentPage('admin');
+      }
+    };
+
+    window.addEventListener('hashchange', checkUrlForAdmin);
+    window.addEventListener('popstate', checkUrlForAdmin);
+
+    // Secret keyword listener: typing 'joju' triggers admin page
+    let keyBuffer = '';
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing inside input/textarea
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
+      keyBuffer += e.key.toLowerCase();
+      if (keyBuffer.length > 10) {
+        keyBuffer = keyBuffer.slice(-10);
+      }
+      if (keyBuffer.includes('joju')) {
+        keyBuffer = '';
+        setCurrentPage('admin');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('hashchange', checkUrlForAdmin);
+      window.removeEventListener('popstate', checkUrlForAdmin);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const handleNavigate = (page: NavigationPage) => {
     setCurrentPage(page);

@@ -9,6 +9,7 @@ import {
   updateSubmissionStatus,
   deleteFormSubmission,
   getAnalyticsStats,
+  clearAnalyticsStats,
   SocialLinks,
   FormSubmission,
   AnalyticsStats
@@ -444,6 +445,33 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         {activeTab === 'analytics' && (
           <div className="space-y-8">
             
+            {/* Header with Reset Analytics Option */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#12063B] p-4 rounded-2xl border border-indigo-500/30">
+              <div>
+                <h2 className="text-lg font-extrabold text-white flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-indigo-400" />
+                  <span>Live Site Analytics & Real-Time Tracking</span>
+                </h2>
+                <p className="text-xs text-gray-300">
+                  Tracking real visitor counts, page views, and lead conversions without artificial mock data.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (confirm('Clear all recorded analytics and reset counters to 0?')) {
+                    const clean = clearAnalyticsStats();
+                    setAnalytics(clean);
+                    showToast('Analytics reset to zero');
+                  }
+                }}
+                className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-bold text-rose-300 transition-all flex items-center gap-2 shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Reset Analytics to 0</span>
+              </button>
+            </div>
+
             {/* Top Metric Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div className="p-5 rounded-2xl bg-[#12063B] border border-indigo-500/30 backdrop-blur-md shadow-xl space-y-2">
@@ -454,7 +482,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 <div className="text-3xl font-black text-white">{analytics.totalPageViews.toLocaleString()}</div>
                 <div className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" />
-                  <span>+18.4% this week</span>
+                  <span>Real-time visitor views</span>
                 </div>
               </div>
 
@@ -466,7 +494,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 <div className="text-3xl font-black text-white">{analytics.totalVisitors.toLocaleString()}</div>
                 <div className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" />
-                  <span>+12.1% active users</span>
+                  <span>Unique user sessions</span>
                 </div>
               </div>
 
@@ -498,12 +526,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               <div className="lg:col-span-6 bg-[#12063B] border border-indigo-500/30 rounded-2xl p-6 shadow-xl space-y-4">
                 <h3 className="text-lg font-extrabold text-white flex items-center gap-2">
                   <Globe className="w-5 h-5 text-indigo-400" />
-                  <span>Most Viewed Pages</span>
+                  <span>Page Views Breakdown</span>
                 </h3>
 
                 <div className="space-y-3.5">
                   {analytics.pageViewsByPage.map((item, idx) => {
-                    const maxViews = Math.max(...analytics.pageViewsByPage.map((p) => p.views));
+                    const maxViews = Math.max(1, ...analytics.pageViewsByPage.map((p) => p.views));
                     const percentage = Math.round((item.views / maxViews) * 100);
 
                     return (
@@ -514,7 +542,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                         </div>
                         <div className="w-full h-2 bg-indigo-950 rounded-full overflow-hidden border border-indigo-500/20">
                           <div
-                            className="h-full bg-gradient-to-r from-[#1817B6] to-indigo-400 rounded-full"
+                            className="h-full bg-gradient-to-r from-[#1817B6] to-indigo-400 rounded-full transition-all duration-500"
                             style={{ width: `${percentage}%` }}
                           />
                         </div>
@@ -528,27 +556,32 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               <div className="lg:col-span-6 bg-[#12063B] border border-indigo-500/30 rounded-2xl p-6 shadow-xl space-y-4">
                 <h3 className="text-lg font-extrabold text-white flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-emerald-400" />
-                  <span>7-Day Traffic & Visitor Volume</span>
+                  <span>Daily Traffic Volume</span>
                 </h3>
 
                 <div className="h-44 flex items-end justify-between gap-3 pt-6 border-b border-white/10 pb-2">
-                  {analytics.dailyViews.map((day, idx) => (
-                    <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">
-                      <div className="text-[10px] font-bold text-indigo-300 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {day.views}
+                  {analytics.dailyViews.map((day, idx) => {
+                    const maxDailyViews = Math.max(10, ...analytics.dailyViews.map((d) => d.views));
+                    const barHeight = Math.max(8, Math.round((day.views / maxDailyViews) * 100));
+
+                    return (
+                      <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">
+                        <div className="text-[10px] font-bold text-indigo-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {day.views}
+                        </div>
+                        <div
+                          className="w-full bg-gradient-to-t from-[#1817B6] to-indigo-400 rounded-t-lg transition-all group-hover:brightness-125"
+                          style={{ height: `${barHeight}%` }}
+                        />
+                        <span className="text-xs font-bold text-gray-400">{day.date}</span>
                       </div>
-                      <div
-                        className="w-full bg-gradient-to-t from-[#1817B6] to-indigo-400 rounded-t-lg transition-all group-hover:brightness-125"
-                        style={{ height: `${(day.views / 700) * 100}%` }}
-                      />
-                      <span className="text-xs font-bold text-gray-400">{day.date}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-gray-300 pt-2">
-                  <span>Peak day: Thursday (680 views)</span>
-                  <span className="text-emerald-400 font-bold">Average session: 3m 42s</span>
+                  <span>Live tracking active</span>
+                  <span className="text-emerald-400 font-bold">Real visitor logging</span>
                 </div>
               </div>
 
@@ -562,18 +595,24 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               </h3>
 
               <div className="space-y-3">
-                {analytics.recentActivities.map((act) => (
-                  <div
-                    key={act.id}
-                    className="flex items-center justify-between p-3.5 rounded-xl bg-white/5 border border-indigo-500/20 text-xs"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                      <span className="text-gray-200 font-medium">{act.event}</span>
-                    </div>
-                    <span className="text-indigo-300 font-semibold">{act.time}</span>
+                {analytics.recentActivities.length === 0 ? (
+                  <div className="text-xs text-gray-400 p-4 text-center bg-white/5 rounded-xl">
+                    No recent activity recorded yet. As visitors interact with the site, logs will appear here.
                   </div>
-                ))}
+                ) : (
+                  analytics.recentActivities.map((act) => (
+                    <div
+                      key={act.id}
+                      className="flex items-center justify-between p-3.5 rounded-xl bg-white/5 border border-indigo-500/20 text-xs"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                        <span className="text-gray-200 font-medium">{act.event}</span>
+                      </div>
+                      <span className="text-indigo-300 font-semibold">{act.time}</span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
