@@ -74,7 +74,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     return sessionStorage.getItem('dsh_admin_auth') === 'true';
   });
   const [authStep, setAuthStep] = useState<'email' | 'otp'>('email');
-  const [authEmail, setAuthEmail] = useState(AUTHORIZED_GMAIL);
+  const [authEmail, setAuthEmail] = useState('');
   const [authOtpInput, setAuthOtpInput] = useState('');
   const [authError, setAuthError] = useState('');
   const [isSendingOtp, setIsSendingOtp] = useState(false);
@@ -222,6 +222,46 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     }
   };
 
+  // Helper to POST to API endpoints with automatic retry if server returns HTML during startup/reload
+  const postApiWithRetry = async (url: string, payload: any, retries = 2, delayMs = 600) => {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const contentType = res.headers.get('content-type') || '';
+        const text = await res.text();
+        const isHtml = text.trim().toLowerCase().startsWith('<!doctype') || text.trim().toLowerCase().startsWith('<html') || !contentType.includes('application/json');
+
+        if (!isHtml) {
+          try {
+            const data = JSON.parse(text);
+            return { ok: res.ok, status: res.status, data, isHtml: false };
+          } catch (e) {
+            console.error(`[API Parse Error] Failed to parse JSON from ${url}:`, text);
+          }
+        }
+
+        if (attempt < retries) {
+          console.warn(`[API Retry] Non-JSON/HTML received from ${url}, retrying in ${delayMs}ms (attempt ${attempt + 1}/${retries})...`);
+          await new Promise((r) => setTimeout(r, delayMs));
+        } else {
+          return { ok: false, status: res.status, data: null, isHtml: true };
+        }
+      } catch (err) {
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, delayMs));
+        } else {
+          throw err;
+        }
+      }
+    }
+    return { ok: false, status: 500, data: null, isHtml: true };
+  };
+
   // Gmail OTP Send Handler
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -232,52 +272,39 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       cleanEmail += '@gmail.com';
     }
 
+    if (!cleanEmail) {
+      setAuthError('Please enter your admin email address.');
+      return;
+    }
+
     if (cleanEmail !== AUTHORIZED_GMAIL) {
-      setAuthError(`Unauthorized email (${cleanEmail || 'empty'}). Admin access is restricted to ${AUTHORIZED_GMAIL}.`);
+      setAuthError(`Access restricted to authorized admin account: ${AUTHORIZED_GMAIL}. (Entered: ${cleanEmail})`);
       return;
     }
 
     setIsSendingOtp(true);
 
     try {
-      console.log(`[Admin Auth] Dispatching OTP code request to /api/auth/send-otp for ${cleanEmail}...`);
-      const res = await fetch('/api/auth/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ email: cleanEmail }),
-      });
+      console.log(`[Admin Auth] Requesting verification code for ${cleanEmail}...`);
+      const { ok, data, isHtml } = await postApiWithRetry('/api/auth/send-otp', { email: cleanEmail });
 
-      console.log(`[Admin Auth] /api/auth/send-otp HTTP status: ${res.status} ${res.statusText}`);
-
-      const contentType = res.headers.get('content-type') || '';
-      const text = await res.text();
-
-      if (text.trim().toLowerCase().startsWith('<!doctype') || text.trim().toLowerCase().startsWith('<html') || !contentType.includes('application/json')) {
-        setAuthError('Authentication server returned invalid response format. Please refresh and try again.');
+      if (isHtml) {
+        setAuthError('Backend server warming up. Please wait 3 seconds and click Send again.');
         return;
       }
 
-      let data: any = {};
-      try {
-        data = JSON.parse(text);
-      } catch (jsonErr) {
-        console.error('[Admin Auth] Failed to parse JSON response:', jsonErr);
-        setAuthError('Unable to process server response. Please try again.');
-        return;
-      }
-
-      if (res.ok && data.success) {
+      if (ok && data?.success) {
         console.log('[Admin Auth] OTP dispatch successful:', data.message);
         setAuthStep('otp');
         setOtpNotice('A 6-digit verification code has been sent to digitalsatehub@gmail.com. Please check your inbox and spam folder.');
         showToast('Verification code sent');
       } else {
-        console.error('[Admin Auth] Server returned error payload:', data);
-        setAuthError(data.error || 'Failed to dispatch security code. Please check your email.');
+        console.error('[Admin Auth] Server error response:', data);
+        setAuthError(data?.error || 'Failed to dispatch security code. Please try again.');
       }
     } catch (err: any) {
       console.error('[Admin Auth Fetch Exception]:', err);
-      setAuthError('Connection error: unable to reach authentication server. Please check your connection.');
+      setAuthError('Connection error: unable to reach authentication server. Please check your network.');
     } finally {
       setIsSendingOtp(false);
     }
@@ -302,39 +329,21 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         cleanEmail += '@gmail.com';
       }
 
-      const res = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ email: cleanEmail, code: inputCode }),
-      });
+      const { ok, data, isHtml } = await postApiWithRetry('/api/auth/verify-otp', { email: cleanEmail, code: inputCode });
 
-      console.log(`[Admin Auth] /api/auth/verify-otp HTTP status: ${res.status} ${res.statusText}`);
-
-      const contentType = res.headers.get('content-type') || '';
-      const text = await res.text();
-
-      if (text.trim().toLowerCase().startsWith('<!doctype') || text.trim().toLowerCase().startsWith('<html') || !contentType.includes('application/json')) {
-        setAuthError('Authentication server returned invalid response format.');
+      if (isHtml) {
+        setAuthError('Authentication server busy. Please try verifying again in a moment.');
         return;
       }
 
-      let data: any = {};
-      try {
-        data = JSON.parse(text);
-      } catch (jsonErr) {
-        console.error('[Admin Auth] Failed to parse verification JSON response:', jsonErr);
-        setAuthError('Unable to process server response.');
-        return;
-      }
-
-      if (res.ok && data.success) {
+      if (ok && data?.success) {
         console.log('[Admin Auth] Verification successful.');
         setIsAuthenticated(true);
         sessionStorage.setItem('dsh_admin_auth', 'true');
         showToast('Authenticated successfully');
       } else {
         console.error('[Admin Auth] Verification error:', data);
-        setAuthError(data.error || 'Invalid or expired verification code. Please try again.');
+        setAuthError(data?.error || 'Invalid or expired verification code. Please try again.');
       }
     } catch (err: any) {
       console.error('[Admin Auth Verify Fetch Exception]:', err);
@@ -571,10 +580,21 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                   <input
                     type="email"
                     required
+                    placeholder="e.g. digitalsatehub@gmail.com"
                     value={authEmail}
                     onChange={(e) => setAuthEmail(e.target.value)}
-                    className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-white focus:outline-none focus:border-indigo-400"
+                    className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-white placeholder-gray-500 focus:outline-none focus:border-indigo-400"
                   />
+                </div>
+                <div className="flex items-center justify-between mt-1.5 px-0.5">
+                  <span className="text-[10px] text-gray-400">Restricted to authorized administrator account</span>
+                  <button
+                    type="button"
+                    onClick={() => setAuthEmail('digitalsatehub@gmail.com')}
+                    className="text-[10px] font-semibold text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
+                  >
+                    Fill Admin Email
+                  </button>
                 </div>
               </div>
 
