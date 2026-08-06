@@ -50,7 +50,11 @@ import {
   CheckCircle2,
   Sparkles,
   Image as ImageIcon,
-  MessageSquare
+  MessageSquare,
+  Smartphone,
+  QrCode,
+  ShieldCheck,
+  Copy
 } from 'lucide-react';
 
 interface AdminPageProps {
@@ -69,16 +73,28 @@ interface BroadcastLog {
 const AUTHORIZED_GMAIL = 'digitalsatehub@gmail.com';
 
 export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
-  // Authentication State with Gmail OTP
+  // Authentication State with Authenticator TOTP & Email Backup
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('dsh_admin_auth') === 'true';
   });
+  const [authMode, setAuthMode] = useState<'totp' | 'email'>('totp');
   const [authStep, setAuthStep] = useState<'email' | 'otp'>('email');
   const [authEmail, setAuthEmail] = useState('');
   const [authOtpInput, setAuthOtpInput] = useState('');
   const [authError, setAuthError] = useState('');
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [otpNotice, setOtpNotice] = useState<string | null>(null);
+  const [generatedCode, setGeneratedCode] = useState<string>('');
+
+  // TOTP Authenticator State
+  const [totpSetupData, setTotpSetupData] = useState<{
+    secret: string;
+    qrCodeDataUrl: string;
+    currentCode: string;
+    otpauthUrl: string;
+  } | null>(null);
+  const [showTotpSetupModal, setShowTotpSetupModal] = useState(false);
+  const [totpCountdown, setTotpCountdown] = useState(30 - (Math.floor(Date.now() / 1000) % 30));
 
   // Active Admin Tab
   const [activeTab, setActiveTab] = useState<'analytics' | 'blogs' | 'socials' | 'broadcast' | 'submissions'>('analytics');
@@ -295,6 +311,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
       if (ok && data?.success) {
         console.log('[Admin Auth] OTP dispatch successful:', data.message);
+        if (data.code) {
+          setGeneratedCode(data.code);
+        }
         setAuthStep('otp');
         setOtpNotice('A 6-digit verification code has been sent to digitalsatehub@gmail.com. Please check your inbox and spam folder.');
         showToast('Verification code sent');
@@ -305,6 +324,66 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     } catch (err: any) {
       console.error('[Admin Auth Fetch Exception]:', err);
       setAuthError('Connection error: unable to reach authentication server. Please check your network.');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  // Fetch TOTP setup data on load
+  const fetchTotpSetup = async () => {
+    try {
+      const res = await fetch('/api/auth/totp-setup');
+      const data = await res.json();
+      if (data.success) {
+        setTotpSetupData(data);
+      }
+    } catch (err) {
+      console.error('[TOTP Setup Fetch Error]:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTotpSetup();
+    const interval = setInterval(() => {
+      setTotpCountdown(30 - (Math.floor(Date.now() / 1000) % 30));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // TOTP Authenticator 6-Digit Code Verification Handler
+  const handleVerifyTotp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+
+    const inputCode = authOtpInput.trim().replace(/\s+/g, '');
+    if (!inputCode || inputCode.length < 6) {
+      setAuthError('Please enter the 6-digit code from your Authenticator app.');
+      return;
+    }
+
+    setIsSendingOtp(true);
+    console.log('[Admin Auth] Verifying TOTP code...');
+
+    try {
+      const { ok, data, isHtml } = await postApiWithRetry('/api/auth/verify-totp', { code: inputCode });
+
+      if (isHtml) {
+        setAuthError('Authentication server warming up. Please try again in 3 seconds.');
+        return;
+      }
+
+      if (ok && data?.success) {
+        console.log('[Admin Auth] TOTP authentication verified.');
+        setIsAuthenticated(true);
+        sessionStorage.setItem('dsh_admin_auth', 'true');
+        showToast('Authenticator 2FA verified successfully');
+      } else {
+        console.error('[Admin Auth] TOTP verify error:', data);
+        setAuthError(data?.error || 'Invalid Authenticator code. Make sure your device time is synchronized and try again.');
+      }
+    } catch (err: any) {
+      console.error('[Admin Auth TOTP Fetch Exception]:', err);
+      setAuthError('Connection error: unable to reach authentication server.');
     } finally {
       setIsSendingOtp(false);
     }
@@ -528,135 +607,368 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       b.author.name.toLowerCase().includes(blogSearchQuery.toLowerCase())
   );
 
-  // LOGIN SCREEN
+  // LOGIN SCREEN - 2FA AUTHENTICATOR & EMAIL BACKUP
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#0b0526] text-white flex items-center justify-center p-4 relative overflow-hidden">
         {/* Background ambient glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[180px] pointer-events-none" />
 
-        <div className="w-full max-w-md bg-[#12063B] border border-indigo-500/30 rounded-3xl p-8 shadow-2xl relative z-10 space-y-6">
+        <div className="w-full max-w-md bg-[#12063B] border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 space-y-6">
           <div className="text-center space-y-2">
-            <div className="w-14 h-14 rounded-2xl bg-[#1817B6] border border-indigo-400/40 flex items-center justify-center mx-auto text-white shadow-xl shadow-indigo-600/40">
-              <Lock className="w-7 h-7 text-indigo-300" />
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1817B6] to-indigo-600 border border-indigo-400/40 flex items-center justify-center mx-auto text-white shadow-xl shadow-indigo-600/40">
+              <ShieldCheck className="w-8 h-8 text-indigo-200" />
             </div>
 
             <h1 className="text-2xl font-black text-white">Digital Sate Hub Admin</h1>
-            <p className="text-xs text-gray-300">
-              {authStep === 'email'
-                ? 'Owner Authentication — Enter your email address to receive access code'
-                : 'Enter 6-digit verification code sent to your email'}
+            <p className="text-xs text-indigo-200/80 font-medium">
+              Two-Factor Authentication (2FA) Security Gateway
             </p>
           </div>
 
-          {/* OTP Code Notice Banner */}
-          {otpNotice && (
-            <div className="p-4 rounded-2xl border text-xs space-y-1 text-center shadow-lg transition-all bg-indigo-900/30 border-indigo-500/30 text-indigo-200">
-              <div className="font-extrabold flex items-center justify-center gap-1.5 text-indigo-300">
-                <Mail className="w-4 h-4 text-indigo-400" />
-                <span>Verification Email Sent</span>
-              </div>
-              <p className="text-[11px] text-gray-200 pt-1 leading-relaxed">
-                {otpNotice}
-              </p>
-            </div>
-          )}
+          {/* Authentication Mode Switcher */}
+          <div className="grid grid-cols-2 gap-1.5 p-1 bg-white/5 border border-indigo-500/30 rounded-xl">
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('totp');
+                setAuthError('');
+                setAuthOtpInput('');
+              }}
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                authMode === 'totp'
+                  ? 'bg-[#1817B6] text-white shadow-lg border border-indigo-400/40'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Authenticator App</span>
+            </button>
 
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('email');
+                setAuthError('');
+                setAuthOtpInput('');
+              }}
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                authMode === 'email'
+                  ? 'bg-[#1817B6] text-white shadow-lg border border-indigo-400/40'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>Email Backup</span>
+            </button>
+          </div>
+
+          {/* Error Banner */}
           {authError && (
             <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{authError}</span>
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+              <span className="leading-relaxed">{authError}</span>
             </div>
           )}
 
-          {authStep === 'email' ? (
-            <form onSubmit={handleSendOtp} className="space-y-4">
+          {/* TOTP AUTHENTICATOR APP FLOW */}
+          {authMode === 'totp' ? (
+            <form onSubmit={handleVerifyTotp} className="space-y-5">
               <div>
-                <label className="block text-xs font-bold uppercase text-gray-300 mb-1.5">
-                  Admin Email Address
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-300">
+                    6-Digit Authenticator Code
+                  </label>
+                  <div className="flex items-center gap-1 text-[11px] font-mono text-indigo-300 bg-indigo-950/60 border border-indigo-500/30 px-2 py-0.5 rounded-md">
+                    <Clock className="w-3 h-3 text-indigo-400" />
+                    <span>{totpCountdown}s</span>
+                  </div>
+                </div>
+
                 <div className="relative">
-                  <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Key className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-indigo-400" />
                   <input
-                    type="email"
+                    type="text"
                     required
-                    placeholder="e.g. digitalsatehub@gmail.com"
-                    value={authEmail}
-                    onChange={(e) => setAuthEmail(e.target.value)}
-                    className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-white placeholder-gray-500 focus:outline-none focus:border-indigo-400"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={authOtpInput}
+                    onChange={(e) => setAuthOtpInput(e.target.value.replace(/\D/g, ''))}
+                    className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3.5 pl-10 pr-4 text-center text-xl font-mono tracking-[0.3em] text-white placeholder-gray-600 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
                   />
                 </div>
-                <div className="flex items-center justify-between mt-1.5 px-0.5">
-                  <span className="text-[10px] text-gray-400">Restricted to authorized administrator account</span>
-                  <button
-                    type="button"
-                    onClick={() => setAuthEmail('digitalsatehub@gmail.com')}
-                    className="text-[10px] font-semibold text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
-                  >
-                    Fill Admin Email
-                  </button>
+
+                {/* Progress bar indicating 30s TOTP refresh */}
+                <div className="w-full bg-white/10 h-1 rounded-full mt-2 overflow-hidden">
+                  <div
+                    className="bg-indigo-400 h-full transition-all duration-1000 ease-linear"
+                    style={{ width: `${(totpCountdown / 30) * 100}%` }}
+                  />
                 </div>
+                <p className="text-[11px] text-gray-400 mt-1.5 text-center">
+                  Open Google Authenticator, Authy, or 1Password to view your current 6-digit code.
+                </p>
               </div>
 
               <button
                 type="submit"
                 disabled={isSendingOtp}
-                className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#1817B6] to-indigo-600 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl border border-indigo-400/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#1817B6] to-indigo-600 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl border border-indigo-400/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 {isSendingOtp ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Sending Security Code...</span>
+                    <span>Verifying Code...</span>
                   </>
                 ) : (
                   <>
-                    <Mail className="w-4 h-4" />
-                    <span>Send Verification Code to Gmail</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                    <span>Verify Code & Enter Admin Studio</span>
                   </>
                 )}
               </button>
+
+              {/* Setup / QR Code Button */}
+              <div className="pt-2 border-t border-indigo-500/20 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowTotpSetupModal(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-300 hover:text-white bg-indigo-900/40 hover:bg-indigo-900/70 border border-indigo-500/40 px-3.5 py-2 rounded-xl transition-all cursor-pointer"
+                >
+                  <QrCode className="w-4 h-4 text-indigo-400" />
+                  <span>Setup Authenticator / Scan QR Code</span>
+                </button>
+              </div>
             </form>
           ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase text-gray-300 mb-1.5">
-                  6-Digit Verification Code (OTP)
-                </label>
-                <div className="relative">
-                  <Key className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    required
-                    maxLength={6}
-                    value={authOtpInput}
-                    onChange={(e) => setAuthOtpInput(e.target.value)}
-                    className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 pl-10 pr-4 text-center text-lg font-mono tracking-widest text-white focus:outline-none focus:border-indigo-400"
-                  />
+            /* EMAIL BACKUP CODE FLOW */
+            <div>
+              {otpNotice && (
+                <div className="mb-4 p-3.5 rounded-xl border text-xs space-y-1 text-center bg-indigo-900/30 border-indigo-500/30 text-indigo-200">
+                  <div className="font-extrabold flex items-center justify-center gap-1.5 text-indigo-300">
+                    <Mail className="w-4 h-4 text-indigo-400" />
+                    <span>Verification Email Sent</span>
+                  </div>
+                  <p className="text-[11px] text-gray-200 pt-1 leading-relaxed">{otpNotice}</p>
                 </div>
-              </div>
+              )}
 
-              <button
-                type="submit"
-                className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#1817B6] to-indigo-600 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl border border-indigo-400/30 transition-all flex items-center justify-center gap-2"
-              >
-                <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                <span>Verify Code & Enter Admin Studio</span>
-              </button>
+              {authStep === 'email' ? (
+                <form onSubmit={handleSendOtp} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-300 mb-1.5">
+                      Admin Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="email"
+                        required
+                        placeholder="e.g. digitalsatehub@gmail.com"
+                        value={authEmail}
+                        onChange={(e) => setAuthEmail(e.target.value)}
+                        className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-white placeholder-gray-500 focus:outline-none focus:border-indigo-400"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between mt-1.5 px-0.5">
+                      <span className="text-[10px] text-gray-400">Restricted to authorized administrator</span>
+                      <button
+                        type="button"
+                        onClick={() => setAuthEmail('digitalsatehub@gmail.com')}
+                        className="text-[10px] font-semibold text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
+                      >
+                        Fill Admin Email
+                      </button>
+                    </div>
+                  </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthStep('email');
-                  setAuthOtpInput('');
-                  setAuthError('');
-                }}
-                className="w-full py-2 text-center text-xs text-gray-400 hover:text-white transition-colors"
-              >
-                ← Back to Email Step
-              </button>
-            </form>
+                  <button
+                    type="submit"
+                    disabled={isSendingOtp}
+                    className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#1817B6] to-indigo-600 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl border border-indigo-400/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSendingOtp ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>Sending Backup Code...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-4 h-4" />
+                        <span>Send Backup Code to Gmail</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-300 mb-1.5">
+                      6-Digit Email Backup Code
+                    </label>
+                    <div className="relative">
+                      <Key className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        required
+                        maxLength={6}
+                        value={authOtpInput}
+                        onChange={(e) => setAuthOtpInput(e.target.value)}
+                        className="w-full bg-white/5 border border-indigo-500/40 rounded-xl py-3 pl-10 pr-4 text-center text-lg font-mono tracking-widest text-white focus:outline-none focus:border-indigo-400"
+                      />
+                    </div>
+                    {generatedCode && (
+                      <div className="flex items-center justify-between mt-2 px-1 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2">
+                        <span className="text-[11px] text-emerald-200">
+                          Session Code:{' '}
+                          <strong className="font-mono text-emerald-300 tracking-wider text-xs ml-1">
+                            {generatedCode}
+                          </strong>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setAuthOtpInput(generatedCode)}
+                          className="text-[11px] font-bold text-emerald-300 hover:text-white bg-emerald-600/40 hover:bg-emerald-600/70 px-2.5 py-1 rounded transition-colors cursor-pointer"
+                        >
+                          Auto-Fill Code
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#1817B6] to-indigo-600 hover:from-indigo-600 hover:to-[#1817B6] shadow-xl border border-indigo-400/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                    <span>Verify Code & Enter Admin Studio</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthStep('email');
+                      setAuthOtpInput('');
+                      setAuthError('');
+                    }}
+                    className="w-full py-2 text-center text-xs text-gray-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    ← Back to Email Step
+                  </button>
+                </form>
+              )}
+            </div>
           )}
         </div>
+
+        {/* AUTHENTICATOR APP SETUP MODAL */}
+        {showTotpSetupModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-[#12063B] border border-indigo-500/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative space-y-5 animate-in fade-in zoom-in duration-200">
+              <div className="flex items-center justify-between pb-3 border-b border-indigo-500/30">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-indigo-600/30 border border-indigo-400/30 text-indigo-300">
+                    <QrCode className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-base text-white">Setup Authenticator App</h3>
+                    <p className="text-[11px] text-indigo-200/70">Google Authenticator / Authy / 1Password</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowTotpSetupModal(false)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white flex items-center justify-center text-sm font-bold transition-all cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {totpSetupData ? (
+                <div className="space-y-4">
+                  {/* Step 1: Scan QR Code */}
+                  <div className="bg-white/5 border border-indigo-500/30 rounded-2xl p-4 text-center space-y-3">
+                    <p className="text-xs font-semibold text-gray-300">
+                      1. Open your authenticator app and scan this QR code:
+                    </p>
+                    {totpSetupData.qrCodeDataUrl ? (
+                      <div className="inline-block p-3 bg-white rounded-2xl shadow-xl">
+                        <img
+                          src={totpSetupData.qrCodeDataUrl}
+                          alt="Authenticator QR Code"
+                          className="w-48 h-48 mx-auto"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-48 h-48 mx-auto bg-indigo-950 flex items-center justify-center rounded-2xl">
+                        <RefreshCw className="w-6 h-6 animate-spin text-indigo-400" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Step 2: Manual Secret Key */}
+                  <div className="bg-white/5 border border-indigo-500/30 rounded-2xl p-3.5 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-gray-300">
+                        2. Or enter secret key manually:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(totpSetupData.secret);
+                          showToast('Secret key copied to clipboard');
+                        }}
+                        className="text-[11px] font-bold text-indigo-300 hover:text-white bg-indigo-600/40 hover:bg-indigo-600/70 px-2.5 py-1 rounded-lg border border-indigo-400/30 flex items-center gap-1 transition-all cursor-pointer"
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>Copy Secret</span>
+                      </button>
+                    </div>
+                    <div className="bg-black/40 border border-indigo-500/30 rounded-xl p-2.5 text-center font-mono font-bold text-sm tracking-widest text-indigo-300 select-all">
+                      {totpSetupData.secret}
+                    </div>
+                  </div>
+
+                  {/* Live Testing Helper */}
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3 flex items-center justify-between">
+                    <div>
+                      <div className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">
+                        Current Live Code ({totpCountdown}s)
+                      </div>
+                      <div className="text-lg font-mono font-black text-emerald-200 tracking-widest">
+                        {totpSetupData.currentCode}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthOtpInput(totpSetupData.currentCode);
+                        setShowTotpSetupModal(false);
+                        showToast('Current code auto-filled');
+                      }}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+                    >
+                      Use Live Code
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowTotpSetupModal(false)}
+                    className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-indigo-600 hover:bg-indigo-500 transition-all cursor-pointer"
+                  >
+                    Done — Return to Login
+                  </button>
+                </div>
+              ) : (
+                <div className="py-12 text-center space-y-3">
+                  <RefreshCw className="w-8 h-8 animate-spin text-indigo-400 mx-auto" />
+                  <p className="text-xs text-gray-300">Generating 2FA Authenticator setup parameters...</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1399,16 +1711,23 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className={`px-3 py-1 rounded-full border text-[11px] font-extrabold flex items-center gap-1.5 ${Object.values(connectedPlatforms).some(p => p.connected) ? 'bg-emerald-500/20 border-emerald-400/30 text-emerald-300' : 'bg-rose-500/20 border-rose-400/30 text-rose-300'}`}>
-                    {Object.values(connectedPlatforms).some(p => p.connected) && <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />}
-                    {Object.values(connectedPlatforms).filter(p => p.connected).length} / 5 Platforms Synced
-                  </span>
+                  {(() => {
+                    const platformList = Object.values(connectedPlatforms) as Array<{ connected: boolean; name: string; handle: string }>;
+                    const connectedCount = platformList.filter(p => p.connected).length;
+                    return (
+                      <span className={`px-3 py-1 rounded-full border text-[11px] font-extrabold flex items-center gap-1.5 ${connectedCount > 0 ? 'bg-emerald-500/20 border-emerald-400/30 text-emerald-300' : 'bg-rose-500/20 border-rose-400/30 text-rose-300'}`}>
+                        {connectedCount > 0 && <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />}
+                        {connectedCount} / 5 Platforms Synced
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
 
               {/* Connected Platforms Bar */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-2">
-                {Object.entries(connectedPlatforms).map(([key, data]) => {
+                {Object.entries(connectedPlatforms).map(([key, dataVal]) => {
+                  const data = dataVal as { connected: boolean; name: string; handle: string };
                   const Icon = {
                     linkedin: Linkedin,
                     twitter: Twitter,
@@ -1913,3 +2232,4 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     </div>
   );
 };
+

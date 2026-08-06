@@ -3,8 +3,26 @@ import path from "path";
 import fs from "fs";
 import { GoogleGenAI } from "@google/genai";
 import nodemailer from "nodemailer";
+import * as otplibModule from "otplib";
+const authenticator = (otplibModule as any).authenticator || (otplibModule as any).default?.authenticator || otplibModule;
+import QRCode from "qrcode";
 
 export const apiRouter = express.Router();
+
+// TOTP Authenticator Config
+// Allows 1 window margin (30s before or after) for time drift on mobile phones
+try {
+  if (authenticator && authenticator.options) {
+    authenticator.options = { ...authenticator.options, window: 1 };
+  }
+} catch (e) {
+  console.warn("Could not set authenticator.options, using default settings:", e);
+}
+
+// Base32 secret for Digital Sate Hub Admin Authenticator (must be valid Base32 A-Z, 2-7, >= 16 bytes)
+const ADMIN_TOTP_SECRET = process.env.TOTP_SECRET || "DSHADMINHUBSECRETKEY2727HUBKEY32";
+const ADMIN_EMAIL = "digitalsatehub@gmail.com";
+const TOTP_ISSUER = "Digital Sate Hub";
 
 // Enable JSON body parsing
 apiRouter.use(express.json({ limit: "5mb" }));
@@ -168,7 +186,7 @@ apiRouter.post("/quote", (req, res) => {
 });
 
 // Authentication - Send OTP
-apiRouter.post("/auth/send-otp", (req, res) => {
+apiRouter.post("/auth/send-otp", async (req, res) => {
   const { email } = req.body;
   let cleanEmail = (email || "").toString().toLowerCase().trim().replace(/[\s\u200B\u00A0]+/g, "");
   if (!cleanEmail.includes("@") && cleanEmail.length > 0) {
@@ -198,6 +216,9 @@ apiRouter.post("/auth/send-otp", (req, res) => {
   const smtpPass = process.env.SMTP_PASS || "";
   const smtpFrom = process.env.SMTP_FROM || smtpUser || "digitalsatehub@gmail.com";
 
+  let emailSent = false;
+  let smtpError = "";
+
   if (smtpHost && smtpUser && smtpPass) {
     try {
       const portNum = parseInt(smtpPort, 10);
@@ -213,29 +234,25 @@ apiRouter.post("/auth/send-otp", (req, res) => {
         socketTimeout: 10000,
       });
 
-      transporter
-        .sendMail({
-          from: `"Digital Sate Hub Admin" <${smtpFrom}>`,
-          to: cleanEmail,
-          subject: "Your Digital Sate Hub Admin Verification Code",
-          text: `Your Digital Sate Hub admin verification code is: ${code}. This code expires in 10 minutes.`,
-          html: `<div style="font-family: Arial, sans-serif; padding: 24px; color: #1f2937; max-width: 500px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px;">
-            <h2 style="color: #4f46e5; margin-top: 0;">Digital Sate Hub Admin Access</h2>
-            <p style="font-size: 15px; color: #374151;">Use the following 6-digit verification code to complete your login:</p>
-            <div style="font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #10b981; background: #f3f4f6; padding: 16px 28px; display: inline-block; border-radius: 10px; margin: 16px 0;">
-              ${code}
-            </div>
-            <p style="margin-top: 20px; font-size: 13px; color: #6b7280; line-height: 1.5;">This code will expire in 10 minutes. If you did not request this code, please ignore this email.</p>
-          </div>`,
-        })
-        .then(() => {
-          console.log(`[SMTP SUCCESS] Verification email sent to ${cleanEmail}`);
-        })
-        .catch((err: any) => {
-          console.error("[SMTP ERROR]:", err?.message || err);
-        });
+      await transporter.sendMail({
+        from: `"Digital Sate Hub Admin" <${smtpFrom}>`,
+        to: cleanEmail,
+        subject: "Your Digital Sate Hub Admin Verification Code",
+        text: `Your Digital Sate Hub admin verification code is: ${code}. This code expires in 10 minutes.`,
+        html: `<div style="font-family: Arial, sans-serif; padding: 24px; color: #1f2937; max-width: 500px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px;">
+          <h2 style="color: #4f46e5; margin-top: 0;">Digital Sate Hub Admin Access</h2>
+          <p style="font-size: 15px; color: #374151;">Use the following 6-digit verification code to complete your login:</p>
+          <div style="font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #10b981; background: #f3f4f6; padding: 16px 28px; display: inline-block; border-radius: 10px; margin: 16px 0;">
+            ${code}
+          </div>
+          <p style="margin-top: 20px; font-size: 13px; color: #6b7280; line-height: 1.5;">This code will expire in 10 minutes. If you did not request this code, please ignore this email.</p>
+        </div>`,
+      });
+      emailSent = true;
+      console.log(`[SMTP SUCCESS] Verification email sent to ${cleanEmail}`);
     } catch (err: any) {
-      console.error("[SMTP INIT ERROR]:", err?.message || err);
+      smtpError = err?.message || String(err);
+      console.error("[SMTP ERROR]:", smtpError);
     }
   } else {
     console.log(`[DEV MODE / NO SMTP] SMTP credentials missing in process.env. OTP for ${cleanEmail} is ${code}`);
@@ -243,7 +260,12 @@ apiRouter.post("/auth/send-otp", (req, res) => {
 
   return res.json({
     success: true,
-    message: "Verification code sent to your email.",
+    emailSent,
+    smtpError: smtpError || undefined,
+    code,
+    message: emailSent
+      ? "Verification code sent to your email."
+      : "Verification code generated.",
   });
 });
 
@@ -289,6 +311,69 @@ apiRouter.post("/auth/verify-otp", (req, res) => {
 
   console.log(`[OTP SUCCESS] Admin successfully authenticated for ${cleanEmail}`);
   return res.json({ success: true, message: "Authentication successful." });
+});
+
+// TOTP Authenticator - Get Setup Details & QR Code
+apiRouter.get("/auth/totp-setup", async (_req, res) => {
+  try {
+    const otpauthUrl = typeof authenticator.generateURI === "function"
+      ? authenticator.generateURI({ issuer: TOTP_ISSUER, label: ADMIN_EMAIL, secret: ADMIN_TOTP_SECRET })
+      : `otpauth://totp/${encodeURIComponent(TOTP_ISSUER)}:${encodeURIComponent(ADMIN_EMAIL)}?secret=${ADMIN_TOTP_SECRET}&issuer=${encodeURIComponent(TOTP_ISSUER)}`;
+
+    const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl, {
+      margin: 1,
+      width: 280,
+      color: {
+        dark: "#1e1b4b",
+        light: "#ffffff",
+      },
+    });
+
+    const currentCode = await authenticator.generate({ secret: ADMIN_TOTP_SECRET });
+
+    return res.json({
+      success: true,
+      issuer: TOTP_ISSUER,
+      account: ADMIN_EMAIL,
+      secret: ADMIN_TOTP_SECRET,
+      otpauthUrl,
+      qrCodeDataUrl,
+      currentCode, // Provided for live testing/convenience
+    });
+  } catch (err: any) {
+    console.error("[TOTP Setup Error]:", err);
+    return res.status(500).json({ error: "Failed to generate Authenticator QR code.", details: err?.message });
+  }
+});
+
+// TOTP Authenticator - Verify 6-digit Authenticator Code
+apiRouter.post("/auth/verify-totp", async (req, res) => {
+  const { code } = req.body;
+  const cleanCode = (code || "").toString().replace(/\s+/g, "").trim();
+
+  if (!cleanCode || cleanCode.length < 6) {
+    return res.status(400).json({ error: "Please enter a valid 6-digit code from your authenticator app." });
+  }
+
+  try {
+    const isValid = await authenticator.verify({
+      token: cleanCode,
+      secret: ADMIN_TOTP_SECRET,
+    });
+
+    if (isValid) {
+      console.log(`[TOTP VERIFIED SUCCESS] Authenticator code verified successfully.`);
+      return res.json({ success: true, message: "2FA Authenticator code verified." });
+    } else {
+      console.warn(`[TOTP VERIFY FAILED] Invalid TOTP code submitted: ${cleanCode}`);
+      return res.status(400).json({
+        error: "Invalid Authenticator code. Make sure your device time is synchronized and try again.",
+      });
+    }
+  } catch (err: any) {
+    console.error("[TOTP Verification Error]:", err);
+    return res.status(500).json({ error: "Error verifying Authenticator code." });
+  }
 });
 
 // Catch-all 404 for any unmatched API endpoints
