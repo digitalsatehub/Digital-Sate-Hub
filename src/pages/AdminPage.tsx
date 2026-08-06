@@ -76,7 +76,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   const [authStep, setAuthStep] = useState<'email' | 'otp'>('email');
   const [authEmail, setAuthEmail] = useState('');
   const [authOtpInput, setAuthOtpInput] = useState('');
-  const [generatedOtp, setGeneratedOtp] = useState('');
   const [authError, setAuthError] = useState('');
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [otpNotice, setOtpNotice] = useState<string | null>(null);
@@ -199,28 +198,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
       if (data.success) {
         setAuthStep('otp');
-        const activeCode = data.code || data.devCode;
-        if (activeCode) {
-          setGeneratedOtp(activeCode);
-          setOtpNotice(`📧 Verification code dispatched to ${AUTHORIZED_GMAIL}. Code: [ ${activeCode} ]`);
-        } else {
-          setOtpNotice(`📧 Verification code securely sent to ${AUTHORIZED_GMAIL}. Please check your inbox.`);
-        }
+        setOtpNotice(`A 6-digit verification code has been sent to ${AUTHORIZED_GMAIL}. Please check your Gmail inbox (and spam folder).`);
         showToast(`Verification code sent to ${AUTHORIZED_GMAIL}`);
       } else {
-        // Fallback code so user is never blocked
-        const fallbackCode = Math.floor(100000 + Math.random() * 900000).toString();
-        setGeneratedOtp(fallbackCode);
-        setOtpNotice(`Verification Code: [ ${fallbackCode} ]`);
-        setAuthStep('otp');
+        setAuthError(data.error || 'Failed to send verification code.');
       }
     } catch (err) {
-      // Fallback on network issue so user can seamlessly log in
-      const fallbackCode = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedOtp(fallbackCode);
-      setOtpNotice(`Verification Code: [ ${fallbackCode} ]`);
-      setAuthStep('otp');
-      showToast('Verification step ready');
+      setAuthError('Network error. Failed to reach server. Please try again.');
     } finally {
       setIsSendingOtp(false);
     }
@@ -232,10 +216,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     setAuthError('');
 
     const inputCode = authOtpInput.trim();
-    if (generatedOtp && inputCode === generatedOtp) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('dsh_admin_auth', 'true');
-      showToast(`Authenticated as ${AUTHORIZED_GMAIL}`);
+    if (!inputCode) {
+      setAuthError('Please enter the 6-digit verification code from your email.');
       return;
     }
 
@@ -252,22 +234,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         sessionStorage.setItem('dsh_admin_auth', 'true');
         showToast(`Authenticated as ${AUTHORIZED_GMAIL}`);
       } else {
-        if (generatedOtp && inputCode === generatedOtp) {
-          setIsAuthenticated(true);
-          sessionStorage.setItem('dsh_admin_auth', 'true');
-          showToast(`Authenticated as ${AUTHORIZED_GMAIL}`);
-        } else {
-          setAuthError(data.error || 'Invalid verification code.');
-        }
+        setAuthError(data.error || 'Invalid verification code. Please check your email and try again.');
       }
     } catch (err) {
-      if (generatedOtp && inputCode === generatedOtp) {
-        setIsAuthenticated(true);
-        sessionStorage.setItem('dsh_admin_auth', 'true');
-        showToast(`Authenticated as ${AUTHORIZED_GMAIL}`);
-      } else {
-        setAuthError('Invalid verification code.');
-      }
+      setAuthError('Network error. Failed to verify code.');
     }
   };
 
@@ -472,32 +442,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
           {/* OTP Code Notice Banner */}
           {otpNotice && (
-            <div
-              onClick={() => {
-                if (generatedOtp) {
-                  setAuthOtpInput(generatedOtp);
-                  showToast('Code copied to input');
-                }
-              }}
-              className={`p-4 rounded-2xl border text-xs space-y-1 text-center shadow-lg transition-all ${generatedOtp ? 'bg-gradient-to-r from-emerald-500/20 to-indigo-500/20 border-emerald-400/40 text-emerald-200 cursor-pointer hover:border-emerald-300' : 'bg-indigo-900/30 border-indigo-500/30 text-indigo-200'}`}
-            >
-              <div className={`font-extrabold flex items-center justify-center gap-1.5 ${generatedOtp ? 'text-emerald-300' : 'text-indigo-300'}`}>
-                <Mail className={`w-4 h-4 ${generatedOtp ? 'text-emerald-400' : 'text-indigo-400'}`} />
-                <span>{generatedOtp ? 'Verification Dispatch Live' : 'Verification Email Sent'}</span>
+            <div className="p-4 rounded-2xl border text-xs space-y-1 text-center shadow-lg transition-all bg-indigo-900/30 border-indigo-500/30 text-indigo-200">
+              <div className="font-extrabold flex items-center justify-center gap-1.5 text-indigo-300">
+                <Mail className="w-4 h-4 text-indigo-400" />
+                <span>Verification Email Sent</span>
               </div>
-              <p className="text-[11px] text-gray-200 pt-1">
+              <p className="text-[11px] text-gray-200 pt-1 leading-relaxed">
                 {otpNotice}
               </p>
-              {generatedOtp && (
-                <>
-                  <div className="text-lg font-mono font-black tracking-widest text-emerald-300 pt-1">
-                    {generatedOtp}
-                  </div>
-                  <div className="text-[10px] text-emerald-400/80 underline font-semibold">
-                    (Click here to auto-fill code)
-                  </div>
-                </>
-              )}
             </div>
           )}
 
