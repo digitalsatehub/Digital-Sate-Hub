@@ -176,17 +176,22 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
     };
     saveOtpStore(store);
 
-    const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM } = process.env;
+    const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+    const smtpPort = process.env.SMTP_PORT || "465";
+    const smtpUser = process.env.SMTP_USER || "digitalsatehub@gmail.com";
+    const smtpPass = process.env.SMTP_PASS || "aohxvgceqvzhoodi";
+    const smtpFrom = process.env.SMTP_FROM || "digitalsatehub@gmail.com";
 
-    if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+    if (smtpHost && smtpUser && smtpPass) {
       try {
+        const portNum = parseInt(smtpPort, 10);
         const transporter = nodemailer.createTransport({
-          host: SMTP_HOST,
-          port: parseInt(SMTP_PORT || "465"),
-          secure: parseInt(SMTP_PORT || "465") === 465,
+          host: smtpHost,
+          port: portNum,
+          secure: portNum === 465, // true for port 465
           auth: {
-            user: SMTP_USER,
-            pass: SMTP_PASS,
+            user: smtpUser,
+            pass: smtpPass,
           },
           connectionTimeout: 10000,
           socketTimeout: 10000,
@@ -194,7 +199,7 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
 
         // Send email in background so client gets immediate response
         transporter.sendMail({
-          from: `"Digital Sate Hub Admin" <${SMTP_FROM || SMTP_USER}>`,
+          from: `"Digital Sate Hub Admin" <${smtpFrom}>`,
           to: cleanEmail,
           subject: "Your Digital Sate Hub Admin Verification Code",
           text: `Your Digital Sate Hub admin verification code is: ${code}. This code expires in 10 minutes.`,
@@ -236,12 +241,6 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
 
     if (!cleanCode) {
       return res.status(400).json({ error: "Verification code is required" });
-    }
-
-    // Master passcode fallback (e.g. 888888 or 984201 or 123456)
-    if (cleanCode === "888888" || cleanCode === "984201" || cleanCode === "123456") {
-      console.log(`[OTP SUCCESS] Admin authenticated via passcode for ${cleanEmail}`);
-      return res.json({ success: true, message: "Authentication successful." });
     }
 
     const store = getOtpStore();

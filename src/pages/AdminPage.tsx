@@ -239,15 +239,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     // 1. Verify server connectivity first
     const connectivity = await checkServerConnectivity();
     if (!connectivity.ok) {
-      if (connectivity.isStaticHost) {
-        console.warn('[Admin Auth] Static host detected. Falling back to local admin passcode mode.');
-        setAuthStep('otp');
-        setOtpNotice(`Running in static hosting mode. Enter verification code 888888 to log in.`);
-        showToast(`Static Host: Enter code 888888 to authenticate.`);
-        setIsSendingOtp(false);
-        return;
-      }
-
       console.error('[Admin Auth] Pre-flight connectivity check failed:', connectivity.message);
       setAuthError('Access not granted');
       setIsSendingOtp(false);
@@ -270,9 +261,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       const text = await res.text();
 
       if (text.trim().toLowerCase().startsWith('<!doctype') || text.trim().toLowerCase().startsWith('<html') || !contentType.includes('application/json')) {
-        setAuthStep('otp');
-        setOtpNotice(`Notice: Static HTML backend returned. Enter verification code 888888 to log in.`);
-        showToast(`Static Mode: Use code 888888 to authenticate.`);
+        setAuthError('Access not granted');
         return;
       }
 
@@ -310,15 +299,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     const inputCode = authOtpInput.trim();
     if (!inputCode) {
       setAuthError('Please enter the 6-digit verification code.');
-      return;
-    }
-
-    // Static / Offline fallback passcode bypass check
-    if (inputCode === '888888' || inputCode === '123456' || inputCode === '984201') {
-      console.log('[Admin Auth] Master/Static fallback verification code accepted.');
-      setIsAuthenticated(true);
-      sessionStorage.setItem('dsh_admin_auth', 'true');
-      showToast('Authenticated successfully');
       return;
     }
 
