@@ -335,10 +335,8 @@ apiRouter.get("/auth/totp-setup", async (_req, res) => {
       success: true,
       issuer: TOTP_ISSUER,
       account: ADMIN_EMAIL,
-      secret: ADMIN_TOTP_SECRET,
       otpauthUrl,
       qrCodeDataUrl,
-      currentCode, // Provided for live testing/convenience
     });
   } catch (err: any) {
     console.error("[TOTP Setup Error]:", err);
@@ -356,10 +354,14 @@ apiRouter.post("/auth/verify-totp", async (req, res) => {
   }
 
   try {
-    const isValid = await authenticator.verify({
+    const verificationResult = await authenticator.verify({
       token: cleanCode,
       secret: ADMIN_TOTP_SECRET,
     });
+
+    const isValid = typeof verificationResult === 'boolean'
+      ? verificationResult
+      : Boolean(verificationResult && (verificationResult as any).valid);
 
     if (isValid) {
       console.log(`[TOTP VERIFIED SUCCESS] Authenticator code verified successfully.`);
