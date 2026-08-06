@@ -254,6 +254,20 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
     return res.json({ success: true, message: "Authentication successful." });
   });
 
+  // Catch-all 404 for any unmatched /api/* endpoints (guarantees JSON output)
+  app.all("/api/*", (req, res) => {
+    res.status(404).json({ error: `API endpoint ${req.originalUrl} not found.` });
+  });
+
+  // Global Express error handler for API requests
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (req.originalUrl && req.originalUrl.startsWith("/api")) {
+      console.error("[Express API Error]:", err);
+      return res.status(500).json({ error: err?.message || "Internal server error" });
+    }
+    next(err);
+  });
+
   // Mount Vite middleware in dev mode
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
