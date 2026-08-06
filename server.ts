@@ -159,12 +159,15 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
   // Authentication - Send OTP
   app.post("/api/auth/send-otp", (req, res) => {
     const { email } = req.body;
-    const cleanEmail = (email || "").toString().toLowerCase().trim();
+    let cleanEmail = (email || "").toString().toLowerCase().trim().replace(/[\s\u200B\u00A0]+/g, "");
+    if (!cleanEmail.includes("@") && cleanEmail.length > 0) {
+      cleanEmail += "@gmail.com";
+    }
 
     // Security check: Only the exact authorized admin email is permitted
     if (cleanEmail !== "digitalsatehub@gmail.com") {
       console.warn(`[AUTH DENIED] Unauthorized email attempt: ${cleanEmail}`);
-      return res.status(403).json({ error: "Access not granted" });
+      return res.status(403).json({ error: `Access restricted to authorized admin account: digitalsatehub@gmail.com (attempted: ${cleanEmail})` });
     }
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -232,11 +235,14 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
   // Authentication - Verify OTP
   app.post("/api/auth/verify-otp", (req, res) => {
     const { email, code } = req.body;
-    const cleanEmail = (email || "").toString().toLowerCase().trim();
+    let cleanEmail = (email || "").toString().toLowerCase().trim().replace(/[\s\u200B\u00A0]+/g, "");
+    if (!cleanEmail.includes("@") && cleanEmail.length > 0) {
+      cleanEmail += "@gmail.com";
+    }
     const cleanCode = (code || "").toString().trim();
 
     if (cleanEmail !== "digitalsatehub@gmail.com") {
-      return res.status(403).json({ error: "Access not granted" });
+      return res.status(403).json({ error: "Access restricted to authorized admin account: digitalsatehub@gmail.com" });
     }
 
     if (!cleanCode) {
@@ -248,18 +254,18 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
 
     if (!record) {
       console.warn(`[OTP Verify Failure] No active OTP found for email: ${cleanEmail}`);
-      return res.status(400).json({ error: "Access not granted" });
+      return res.status(400).json({ error: "No active verification code found. Please request a new code." });
     }
 
     if (Date.now() > record.expiresAt) {
       delete store[cleanEmail];
       saveOtpStore(store);
-      return res.status(400).json({ error: "Verification code has expired. Access not granted." });
+      return res.status(400).json({ error: "Verification code has expired. Please request a new code." });
     }
 
     if (record.code.toString().trim() !== cleanCode) {
       console.warn(`[OTP Verify Mismatch] Code expected: ${record.code}, received: ${cleanCode}`);
-      return res.status(400).json({ error: "Access not granted" });
+      return res.status(400).json({ error: "Invalid verification code. Please check your email and try again." });
     }
 
     // Clear OTP after successful use

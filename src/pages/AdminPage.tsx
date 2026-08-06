@@ -227,9 +227,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     e.preventDefault();
     setAuthError('');
 
-    const cleanEmail = authEmail.replace(/[\s\u200B\u00A0]+/g, '').toLowerCase();
+    let cleanEmail = authEmail.replace(/[\s\u200B\u00A0]+/g, '').toLowerCase().trim();
+    if (!cleanEmail.includes('@') && cleanEmail.length > 0) {
+      cleanEmail += '@gmail.com';
+    }
+
     if (cleanEmail !== AUTHORIZED_GMAIL) {
-      setAuthError('Access not granted');
+      setAuthError(`Unauthorized email (${cleanEmail || 'empty'}). Admin access is restricted to ${AUTHORIZED_GMAIL}.`);
       return;
     }
 
@@ -249,7 +253,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       const text = await res.text();
 
       if (text.trim().toLowerCase().startsWith('<!doctype') || text.trim().toLowerCase().startsWith('<html') || !contentType.includes('application/json')) {
-        setAuthError('Access not granted');
+        setAuthError('Authentication server returned invalid response format. Please refresh and try again.');
         return;
       }
 
@@ -258,22 +262,22 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         data = JSON.parse(text);
       } catch (jsonErr) {
         console.error('[Admin Auth] Failed to parse JSON response:', jsonErr);
-        setAuthError('Access not granted');
+        setAuthError('Unable to process server response. Please try again.');
         return;
       }
 
       if (res.ok && data.success) {
         console.log('[Admin Auth] OTP dispatch successful:', data.message);
         setAuthStep('otp');
-        setOtpNotice('A 6-digit verification code has been sent to your email address. Please check your inbox (and spam folder).');
+        setOtpNotice('A 6-digit verification code has been sent to digitalsatehub@gmail.com. Please check your inbox and spam folder.');
         showToast('Verification code sent');
       } else {
         console.error('[Admin Auth] Server returned error payload:', data);
-        setAuthError(data.error || 'Access not granted');
+        setAuthError(data.error || 'Failed to dispatch security code. Please check your email.');
       }
     } catch (err: any) {
       console.error('[Admin Auth Fetch Exception]:', err);
-      setAuthError('Access not granted');
+      setAuthError('Connection error: unable to reach authentication server. Please check your connection.');
     } finally {
       setIsSendingOtp(false);
     }
@@ -293,7 +297,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     console.log('[Admin Auth] Submitting OTP verification code...');
 
     try {
-      const cleanEmail = (authEmail.replace(/[\s\u200B\u00A0]+/g, '') || AUTHORIZED_GMAIL).toLowerCase();
+      let cleanEmail = (authEmail.replace(/[\s\u200B\u00A0]+/g, '') || AUTHORIZED_GMAIL).toLowerCase().trim();
+      if (!cleanEmail.includes('@') && cleanEmail.length > 0) {
+        cleanEmail += '@gmail.com';
+      }
+
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -306,7 +314,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       const text = await res.text();
 
       if (text.trim().toLowerCase().startsWith('<!doctype') || text.trim().toLowerCase().startsWith('<html') || !contentType.includes('application/json')) {
-        setAuthError('Access not granted');
+        setAuthError('Authentication server returned invalid response format.');
         return;
       }
 
@@ -315,7 +323,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         data = JSON.parse(text);
       } catch (jsonErr) {
         console.error('[Admin Auth] Failed to parse verification JSON response:', jsonErr);
-        setAuthError('Access not granted');
+        setAuthError('Unable to process server response.');
         return;
       }
 
@@ -326,11 +334,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         showToast('Authenticated successfully');
       } else {
         console.error('[Admin Auth] Verification error:', data);
-        setAuthError(data.error || 'Access not granted');
+        setAuthError(data.error || 'Invalid or expired verification code. Please try again.');
       }
     } catch (err: any) {
       console.error('[Admin Auth Verify Fetch Exception]:', err);
-      setAuthError('Access not granted');
+      setAuthError('Connection error verifying security code.');
     }
   };
 
