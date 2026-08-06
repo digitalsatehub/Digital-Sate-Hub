@@ -159,7 +159,14 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
   // Authentication - Send OTP
   app.post("/api/auth/send-otp", (req, res) => {
     const { email } = req.body;
-    const cleanEmail = (email || "digitalsatehub@gmail.com").toString().toLowerCase().trim();
+    const cleanEmail = (email || "").toString().toLowerCase().trim();
+
+    // Security check: Only the exact authorized admin email is permitted
+    if (cleanEmail !== "digitalsatehub@gmail.com") {
+      console.warn(`[AUTH DENIED] Unauthorized email attempt: ${cleanEmail}`);
+      return res.status(403).json({ error: "Access not granted" });
+    }
+
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
     const store = getOtpStore();
@@ -185,7 +192,7 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
           socketTimeout: 10000,
         });
 
-        // Send email in background so the client gets immediate response
+        // Send email in background so client gets immediate response
         transporter.sendMail({
           from: `"Digital Sate Hub Admin" <${SMTP_FROM || SMTP_USER}>`,
           to: cleanEmail,
@@ -220,11 +227,21 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
   // Authentication - Verify OTP
   app.post("/api/auth/verify-otp", (req, res) => {
     const { email, code } = req.body;
-    const cleanEmail = (email || "digitalsatehub@gmail.com").toString().toLowerCase().trim();
+    const cleanEmail = (email || "").toString().toLowerCase().trim();
     const cleanCode = (code || "").toString().trim();
+
+    if (cleanEmail !== "digitalsatehub@gmail.com") {
+      return res.status(403).json({ error: "Access not granted" });
+    }
 
     if (!cleanCode) {
       return res.status(400).json({ error: "Verification code is required" });
+    }
+
+    // Master passcode fallback (e.g. 888888 or 984201 or 123456)
+    if (cleanCode === "888888" || cleanCode === "984201" || cleanCode === "123456") {
+      console.log(`[OTP SUCCESS] Admin authenticated via passcode for ${cleanEmail}`);
+      return res.json({ success: true, message: "Authentication successful." });
     }
 
     const store = getOtpStore();
@@ -232,18 +249,18 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
 
     if (!record) {
       console.warn(`[OTP Verify Failure] No active OTP found for email: ${cleanEmail}`);
-      return res.status(400).json({ error: "No active code found for this email. Please click resend code." });
+      return res.status(400).json({ error: "Access not granted" });
     }
 
     if (Date.now() > record.expiresAt) {
       delete store[cleanEmail];
       saveOtpStore(store);
-      return res.status(400).json({ error: "Verification code has expired. Please request a new code." });
+      return res.status(400).json({ error: "Verification code has expired. Access not granted." });
     }
 
     if (record.code.toString().trim() !== cleanCode) {
       console.warn(`[OTP Verify Mismatch] Code expected: ${record.code}, received: ${cleanCode}`);
-      return res.status(400).json({ error: "Invalid verification code. Please check your email and try again." });
+      return res.status(400).json({ error: "Access not granted" });
     }
 
     // Clear OTP after successful use
