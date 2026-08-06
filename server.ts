@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
+import "dotenv/config";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import nodemailer from "nodemailer";
@@ -182,8 +183,8 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
     const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
     const smtpPort = process.env.SMTP_PORT || "465";
     const smtpUser = process.env.SMTP_USER || "digitalsatehub@gmail.com";
-    const smtpPass = process.env.SMTP_PASS || "aohxvgceqvzhoodi";
-    const smtpFrom = process.env.SMTP_FROM || "digitalsatehub@gmail.com";
+    const smtpPass = process.env.SMTP_PASS || "";
+    const smtpFrom = process.env.SMTP_FROM || smtpUser || "digitalsatehub@gmail.com";
 
     if (smtpHost && smtpUser && smtpPass) {
       try {
