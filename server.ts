@@ -2,6 +2,10 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import nodemailer from "nodemailer";
+
+// In-memory store for OTPs
+const otpStore: Record<string, { code: string; expiresAt: number }> = {};
 
 async function startServer() {
   const app = express();
@@ -121,6 +125,86 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
       quoteId: `DSH-QT-${Math.floor(100000 + Math.random() * 900000)}`,
       message: "Your custom proposal request has been generated! Check your email shortly or schedule your review call."
     });
+  });
+
+  // Authentication - Send OTP
+  app.post("/api/auth/send-otp", async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    otpStore[email.toLowerCase()] = {
+      code,
+      expiresAt: Date.now() + 1000 * 60 * 10 // 10 minutes
+    };
+
+    // Check if SMTP is configured
+    const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM } = process.env;
+    if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: SMTP_HOST,
+          port: parseInt(SMTP_PORT || "465"),
+          secure: parseInt(SMTP_PORT || "465") === 465, // true for 465, false for other ports
+          auth: {
+            user: SMTP_USER,
+            pass: SMTP_PASS,
+          },
+        });
+
+        await transporter.sendMail({
+          from: `"Digital Sate Hub Admin" <${SMTP_FROM || SMTP_USER}>`,
+          to: email,
+          subject: "Your Admin Verification Code",
+          text: `Your Digital Sate Hub admin verification code is: ${code}`,
+          html: `<p>Your Digital Sate Hub admin verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes.</p>`,
+        });
+        
+        return res.json({ success: true, message: "OTP sent via email." });
+      } catch (err) {
+        console.error("Error sending OTP email:", err);
+        return res.status(500).json({ error: "Failed to send email. Check SMTP configuration." });
+      }
+    } else {
+      console.log(`[DEV MODE - SMTP NOT CONFIGURED] OTP for ${email} is ${code}`);
+      return res.json({ 
+        success: true, 
+        message: "SMTP not configured. OTP printed to server console for development.",
+        // We do not return the OTP here in production, but for the preview, if they don't set up SMTP, they can't login unless they look at logs.
+        // Actually, to make it work in the UI without real SMTP config just for the AI Studio preview, we might return it with a warning.
+        devMode: true,
+        devCode: code
+      });
+    }
+  });
+
+  // Authentication - Verify OTP
+  app.post("/api/auth/verify-otp", (req, res) => {
+    const { email, code } = req.body;
+    if (!email || !code) {
+      return res.status(400).json({ error: "Email and code are required" });
+    }
+
+    const record = otpStore[email.toLowerCase()];
+    if (!record) {
+      return res.status(400).json({ error: "No OTP requested for this email" });
+    }
+
+    if (Date.now() > record.expiresAt) {
+      delete otpStore[email.toLowerCase()];
+      return res.status(400).json({ error: "OTP expired" });
+    }
+
+    if (record.code !== code) {
+      return res.status(400).json({ error: "Invalid OTP code" });
+    }
+
+    // Clear OTP after successful use
+    delete otpStore[email.toLowerCase()];
+    
+    return res.json({ success: true });
   });
 
   // Mount Vite middleware in dev mode

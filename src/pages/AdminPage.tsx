@@ -100,16 +100,16 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
   // Social Broadcast State
   const [connectedPlatforms, setConnectedPlatforms] = useState({
-    linkedin: { connected: true, name: 'LinkedIn Agency Page', handle: 'Digital Sate Hub' },
-    twitter: { connected: true, name: 'Twitter / X Profile', handle: '@DigitalSateHub' },
-    facebook: { connected: true, name: 'Facebook Official Page', handle: 'Digital Sate Hub' },
-    instagram: { connected: true, name: 'Instagram Business', handle: '@digitalsatehub' },
-    youtube: { connected: true, name: 'YouTube Growth Channel', handle: 'Digital Sate Hub' }
+    linkedin: { connected: false, name: 'LinkedIn Agency Page', handle: '' },
+    twitter: { connected: false, name: 'Twitter / X Profile', handle: '' },
+    facebook: { connected: false, name: 'Facebook Official Page', handle: '' },
+    instagram: { connected: false, name: 'Instagram Business', handle: '' },
+    youtube: { connected: false, name: 'YouTube Growth Channel', handle: '' }
   });
 
   const [broadcastText, setBroadcastText] = useState('');
   const [broadcastMediaUrl, setBroadcastMediaUrl] = useState('');
-  const [selectedChannels, setSelectedChannels] = useState<string[]>(['linkedin', 'twitter', 'facebook', 'instagram']);
+  const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastProgress, setBroadcastProgress] = useState<string | null>(null);
 
@@ -177,7 +177,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   };
 
   // Gmail OTP Send Handler
-  const handleSendOtp = (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
 
@@ -189,28 +189,57 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
     setIsSendingOtp(true);
 
-    setTimeout(() => {
-      // Generate a 6-digit OTP code
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedOtp(code);
-      setAuthStep('otp');
+    try {
+      const res = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setAuthStep('otp');
+        showToast(`Verification code sent to ${AUTHORIZED_GMAIL}`);
+        if (data.devMode) {
+          setOtpNotice(`[DEV MODE] SMTP not configured. OTP printed to server console: [ ${data.devCode} ]`);
+          setGeneratedOtp(data.devCode);
+        } else {
+          setOtpNotice(`📧 Verification code securely sent to ${AUTHORIZED_GMAIL}. Please check your inbox (and spam folder).`);
+          setGeneratedOtp(''); // Not exposing it to client if real SMTP is used
+        }
+      } else {
+        setAuthError(data.error || 'Failed to send OTP.');
+      }
+    } catch (err) {
+      setAuthError('Network error. Failed to reach server.');
+    } finally {
       setIsSendingOtp(false);
-      setOtpNotice(`📧 Verification Code sent to ${AUTHORIZED_GMAIL}: [ ${code} ]`);
-      showToast(`Verification code sent to ${AUTHORIZED_GMAIL}`);
-    }, 600);
+    }
   };
 
   // Gmail OTP Verification Handler
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
 
-    if (authOtpInput.trim() === generatedOtp) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('dsh_admin_auth', 'true');
-      showToast(`Authenticated as ${AUTHORIZED_GMAIL}`);
-    } else {
-      setAuthError('Invalid 6-digit verification code. Please check your email or copy from the banner above.');
+    // If devMode is active and we have the code client-side, we still want to verify server-side
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: authEmail.trim().toLowerCase(), code: authOtpInput.trim() }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('dsh_admin_auth', 'true');
+        showToast(`Authenticated as ${AUTHORIZED_GMAIL}`);
+      } else {
+        setAuthError(data.error || 'Invalid verification code.');
+      }
+    } catch (err) {
+      setAuthError('Network error. Failed to reach server.');
     }
   };
 
@@ -1276,84 +1305,70 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-[11px] font-extrabold text-emerald-300 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    5 Platforms Synced
+                  <span className={`px-3 py-1 rounded-full border text-[11px] font-extrabold flex items-center gap-1.5 ${Object.values(connectedPlatforms).some(p => p.connected) ? 'bg-emerald-500/20 border-emerald-400/30 text-emerald-300' : 'bg-rose-500/20 border-rose-400/30 text-rose-300'}`}>
+                    {Object.values(connectedPlatforms).some(p => p.connected) && <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />}
+                    {Object.values(connectedPlatforms).filter(p => p.connected).length} / 5 Platforms Synced
                   </span>
                 </div>
               </div>
 
               {/* Connected Platforms Bar */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-2">
-                {/* LinkedIn */}
-                <div className="p-3 rounded-2xl bg-white/5 border border-indigo-500/30 flex items-center justify-between">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-8 h-8 rounded-xl bg-[#0A66C2]/20 border border-[#0A66C2]/40 flex items-center justify-center shrink-0">
-                      <Linkedin className="w-4 h-4 text-[#0A66C2]" />
-                    </div>
-                    <div className="truncate">
-                      <div className="text-xs font-bold text-white truncate">LinkedIn</div>
-                      <div className="text-[10px] text-gray-400 truncate">{connectedPlatforms.linkedin.handle}</div>
-                    </div>
-                  </div>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 ml-1" />
-                </div>
+                {Object.entries(connectedPlatforms).map(([key, data]) => {
+                  const Icon = {
+                    linkedin: Linkedin,
+                    twitter: Twitter,
+                    facebook: Facebook,
+                    instagram: Instagram,
+                    youtube: Youtube
+                  }[key as keyof typeof connectedPlatforms] || Linkedin;
+                  
+                  const colors = {
+                    linkedin: 'text-[#0A66C2] bg-[#0A66C2]/20 border-[#0A66C2]/40',
+                    twitter: 'text-sky-400 bg-white/10 border-white/20',
+                    facebook: 'text-[#1877F2] bg-[#1877F2]/20 border-[#1877F2]/40',
+                    instagram: 'text-rose-400 bg-rose-500/20 border-rose-500/40',
+                    youtube: 'text-red-500 bg-red-600/20 border-red-500/40'
+                  }[key as keyof typeof connectedPlatforms];
 
-                {/* Twitter / X */}
-                <div className="p-3 rounded-2xl bg-white/5 border border-indigo-500/30 flex items-center justify-between">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
-                      <Twitter className="w-4 h-4 text-sky-400" />
+                  return (
+                    <div key={key} className={`p-3 rounded-2xl border flex flex-col justify-between gap-3 transition-all ${data.connected ? 'bg-white/5 border-indigo-500/30' : 'bg-white/5 border-dashed border-gray-600 hover:border-indigo-400'}`}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${colors}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="truncate">
+                          <div className="text-xs font-bold text-white truncate">{data.name}</div>
+                          {data.connected && <div className="text-[10px] text-gray-400 truncate">{data.handle}</div>}
+                        </div>
+                      </div>
+                      
+                      {data.connected ? (
+                        <div className="flex items-center justify-end gap-1">
+                           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                           <span className="text-[10px] font-bold text-emerald-400">Connected</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            alert(`To securely connect ${data.name}, you need to configure its OAuth API Client ID and Secret in your environment variables. For this preview, we will simulate a successful connection.`);
+                            setConnectedPlatforms(prev => ({
+                              ...prev,
+                              [key]: {
+                                ...prev[key as keyof typeof connectedPlatforms],
+                                connected: true,
+                                handle: '@DigitalSateHub'
+                              }
+                            }));
+                          }}
+                          className="w-full py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-[10px] font-bold text-indigo-300 border border-indigo-500/30 transition-colors"
+                        >
+                          Connect Account
+                        </button>
+                      )}
                     </div>
-                    <div className="truncate">
-                      <div className="text-xs font-bold text-white truncate">Twitter / X</div>
-                      <div className="text-[10px] text-gray-400 truncate">{connectedPlatforms.twitter.handle}</div>
-                    </div>
-                  </div>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 ml-1" />
-                </div>
-
-                {/* Facebook */}
-                <div className="p-3 rounded-2xl bg-white/5 border border-indigo-500/30 flex items-center justify-between">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-8 h-8 rounded-xl bg-[#1877F2]/20 border border-[#1877F2]/40 flex items-center justify-center shrink-0">
-                      <Facebook className="w-4 h-4 text-[#1877F2]" />
-                    </div>
-                    <div className="truncate">
-                      <div className="text-xs font-bold text-white truncate">Facebook</div>
-                      <div className="text-[10px] text-gray-400 truncate">{connectedPlatforms.facebook.handle}</div>
-                    </div>
-                  </div>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 ml-1" />
-                </div>
-
-                {/* Instagram */}
-                <div className="p-3 rounded-2xl bg-white/5 border border-indigo-500/30 flex items-center justify-between">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
-                      <Instagram className="w-4 h-4 text-rose-400" />
-                    </div>
-                    <div className="truncate">
-                      <div className="text-xs font-bold text-white truncate">Instagram</div>
-                      <div className="text-[10px] text-gray-400 truncate">{connectedPlatforms.instagram.handle}</div>
-                    </div>
-                  </div>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 ml-1" />
-                </div>
-
-                {/* YouTube */}
-                <div className="p-3 rounded-2xl bg-white/5 border border-indigo-500/30 flex items-center justify-between">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-8 h-8 rounded-xl bg-red-600/20 border border-red-500/40 flex items-center justify-center shrink-0">
-                      <Youtube className="w-4 h-4 text-red-500" />
-                    </div>
-                    <div className="truncate">
-                      <div className="text-xs font-bold text-white truncate">YouTube</div>
-                      <div className="text-[10px] text-gray-400 truncate">{connectedPlatforms.youtube.handle}</div>
-                    </div>
-                  </div>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 ml-1" />
-                </div>
+                  );
+                })}
               </div>
             </div>
 
