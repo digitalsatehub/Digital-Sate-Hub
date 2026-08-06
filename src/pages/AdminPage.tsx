@@ -451,21 +451,25 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                   showToast('Code copied to input');
                 }
               }}
-              className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-indigo-500/20 border border-emerald-400/40 text-emerald-200 text-xs space-y-1 text-center cursor-pointer hover:border-emerald-300 transition-all shadow-lg"
+              className={`p-4 rounded-2xl border text-xs space-y-1 text-center shadow-lg transition-all ${generatedOtp ? 'bg-gradient-to-r from-emerald-500/20 to-indigo-500/20 border-emerald-400/40 text-emerald-200 cursor-pointer hover:border-emerald-300' : 'bg-indigo-900/30 border-indigo-500/30 text-indigo-200'}`}
             >
-              <div className="font-extrabold flex items-center justify-center gap-1.5 text-emerald-300">
-                <Mail className="w-4 h-4 text-emerald-400" />
-                <span>Verification Dispatch Live</span>
+              <div className={`font-extrabold flex items-center justify-center gap-1.5 ${generatedOtp ? 'text-emerald-300' : 'text-indigo-300'}`}>
+                <Mail className={`w-4 h-4 ${generatedOtp ? 'text-emerald-400' : 'text-indigo-400'}`} />
+                <span>{generatedOtp ? 'Verification Dispatch Live' : 'Verification Email Sent'}</span>
               </div>
-              <p className="text-[11px] text-gray-200">
-                A 6-digit OTP code has been sent to <strong>{AUTHORIZED_GMAIL}</strong>:
+              <p className="text-[11px] text-gray-200 pt-1">
+                {otpNotice}
               </p>
-              <div className="text-lg font-mono font-black tracking-widest text-emerald-300 pt-1">
-                {generatedOtp}
-              </div>
-              <div className="text-[10px] text-emerald-400/80 underline font-semibold">
-                (Click here to auto-fill code)
-              </div>
+              {generatedOtp && (
+                <>
+                  <div className="text-lg font-mono font-black tracking-widest text-emerald-300 pt-1">
+                    {generatedOtp}
+                  </div>
+                  <div className="text-[10px] text-emerald-400/80 underline font-semibold">
+                    (Click here to auto-fill code)
+                  </div>
+                </>
+              )}
             </div>
           )}
 
