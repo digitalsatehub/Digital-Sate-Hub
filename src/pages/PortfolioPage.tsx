@@ -1,9 +1,10 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { PORTFOLIO_PROJECTS } from '../data/siteData';
+import { getAdminPortfolio } from '../lib/adminStore';
 import { InteractiveBoxGrid } from '../components/InteractiveBoxGrid';
 import { PortraitVideoTestimonial } from '../components/PortraitVideoTestimonial';
 import { VideoTestimonials } from '../components/VideoTestimonials';
-import { NavigationPage } from '../types';
+import { NavigationPage, PortfolioItem } from '../types';
 import { motion } from 'motion/react';
 
 interface PortfolioPageProps {
@@ -13,9 +14,19 @@ interface PortfolioPageProps {
 
 export const PortfolioPage: React.FC<PortfolioPageProps> = ({ onOpenBooking }) => {
   const heroRef = useRef<HTMLDivElement>(null);
-  
-  // Select top 8 projects for 2-column grid layout (4 rows of 2 columns)
-  const displayProjects = PORTFOLIO_PROJECTS.slice(0, 8);
+  const [projectsList, setProjectsList] = useState<PortfolioItem[]>(() => {
+    return getAdminPortfolio();
+  });
+
+  useEffect(() => {
+    const update = () => {
+      setProjectsList(getAdminPortfolio());
+    };
+    window.addEventListener('dsh_portfolio_updated', update);
+    return () => window.removeEventListener('dsh_portfolio_updated', update);
+  }, []);
+
+  const displayProjects = projectsList.slice(0, 12);
 
   return (
     <div className="bg-[#12063B] text-white min-h-screen pt-12 pb-24 space-y-16">

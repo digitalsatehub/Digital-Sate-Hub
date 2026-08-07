@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { getAdminReviews } from '../lib/adminStore';
 
 export interface ReviewItem {
   id: string;
@@ -101,9 +102,52 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({
   onOpenBooking,
   variant = 'stack'
 }) => {
+  const [reviewsList, setReviewsList] = useState<ReviewItem[]>(() => {
+    const adminReviews = getAdminReviews();
+    if (adminReviews && adminReviews.length > 0) {
+      return adminReviews.map((r) => ({
+        id: r.id,
+        platform: 'upwork' as const,
+        platformLabel: r.company || 'Verified Client',
+        categoryTags: r.serviceProvided || 'Growth & Automation',
+        quote: r.shortQuote || '',
+        clientName: r.clientName,
+        verifiedLabel: `Verified ${r.role || 'Client'}`,
+        ratingValue: '5.0',
+        speedLabel: 'Top Tier',
+        jobSuccessLabel: '100%'
+      }));
+    }
+    return REVIEWS_DATA;
+  });
+
+  useEffect(() => {
+    const update = () => {
+      const adminReviews = getAdminReviews();
+      if (adminReviews && adminReviews.length > 0) {
+        setReviewsList(
+          adminReviews.map((r) => ({
+            id: r.id,
+            platform: 'upwork' as const,
+            platformLabel: r.company || 'Verified Client',
+            categoryTags: r.serviceProvided || 'Growth & Automation',
+            quote: r.shortQuote || '',
+            clientName: r.clientName,
+            verifiedLabel: `Verified ${r.role || 'Client'}`,
+            ratingValue: '5.0',
+            speedLabel: 'Top Tier',
+            jobSuccessLabel: '100%'
+          }))
+        );
+      }
+    };
+    window.addEventListener('dsh_reviews_updated', update);
+    return () => window.removeEventListener('dsh_reviews_updated', update);
+  }, []);
+
   // If variant is marquee, render continuous left-to-right scrolling reviews track
   if (variant === 'marquee') {
-    const duplicatedReviews = [...REVIEWS_DATA, ...REVIEWS_DATA, ...REVIEWS_DATA];
+    const duplicatedReviews = [...reviewsList, ...reviewsList, ...reviewsList];
 
     return (
       <section className="py-20 lg:py-24 bg-[#12063B] text-white relative border-y border-indigo-900/50 overflow-hidden">
@@ -231,7 +275,7 @@ export const VideoTestimonials: React.FC<VideoTestimonialsProps> = ({
 
         {/* Single Column Stacking Reviews */}
         <div className="flex flex-col gap-20 sm:gap-28 relative pb-20">
-          {REVIEWS_DATA.map((rev, idx) => {
+          {reviewsList.map((rev, idx) => {
             const isDarkBlue = idx % 2 === 0;
 
             const cardBgClass = isDarkBlue

@@ -160,21 +160,13 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onOpenBooking, onOpenQ
               Prefer Fast Instant Booking?
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
               <button
                 onClick={onOpenBooking}
-                className="p-3.5 rounded-xl bg-[#1817B6] hover:bg-indigo-600 font-bold text-xs text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 border border-indigo-400/30"
+                className="w-full sm:w-auto p-3.5 px-6 rounded-xl bg-[#1817B6] hover:bg-indigo-600 font-bold text-xs text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 border border-indigo-400/30"
               >
                 <Calendar className="w-4 h-4" />
                 <span>Book 1-on-1 Call</span>
-              </button>
-
-              <button
-                onClick={onOpenQuote}
-                className="p-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 font-bold text-xs text-indigo-200 transition-all flex items-center justify-center gap-2"
-              >
-                <Calculator className="w-4 h-4" />
-                <span>AI Scope Builder</span>
               </button>
             </div>
           </div>
@@ -270,20 +262,6 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onOpenBooking, onOpenQ
                     <option value="Marketing Automation">Multi-Channel Marketing Automation</option>
                     <option value="AI Agents">AI Conversational Agents</option>
                   </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase text-gray-300 mb-1">
-                    Project Goals & Requirements *
-                  </label>
-                  <textarea
-                    rows={4}
-                    required
-                    placeholder="Describe your current setup, goals, timeline, or any specific platforms you use..."
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-400"
-                  />
                 </div>
 
                 <button

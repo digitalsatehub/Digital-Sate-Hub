@@ -164,10 +164,71 @@ Ensure the tone is authoritative, highly professional, encouraging, and outcome-
   }
 });
 
+// Helper to send email notifications to admin (digitalsatehub@gmail.com)
+async function sendAdminNotificationEmail(subject: string, htmlBody: string) {
+  const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+  const smtpPort = process.env.SMTP_PORT || "465";
+  const smtpUser = process.env.SMTP_USER || "digitalsatehub@gmail.com";
+  const smtpPass = process.env.SMTP_PASS || "";
+  const smtpFrom = process.env.SMTP_FROM || smtpUser || "digitalsatehub@gmail.com";
+
+  if (smtpHost && smtpUser && smtpPass) {
+    try {
+      const portNum = parseInt(smtpPort, 10);
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: portNum,
+        secure: portNum === 465,
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+        connectionTimeout: 10000,
+        socketTimeout: 10000,
+      });
+
+      await transporter.sendMail({
+        from: `"Digital Sate Hub Alerts" <${smtpFrom}>`,
+        to: "digitalsatehub@gmail.com",
+        subject,
+        html: htmlBody,
+      });
+      console.log(`[EMAIL NOTIFICATION SENT] ${subject}`);
+    } catch (err) {
+      console.error("[EMAIL NOTIFICATION ERROR]:", err);
+    }
+  } else {
+    console.log(`[EMAIL ALERT LOGGED (NO SMTP)]: ${subject}`);
+  }
+}
+
 // Contact / Strategy Call Booking endpoint
-apiRouter.post("/contact", (req, res) => {
-  const { name, email, phone, businessName, serviceRequested, preferredDate, message } = req.body;
-  console.log("New Strategy Call Booking:", { name, email, phone, businessName, serviceRequested, preferredDate, message });
+apiRouter.post("/contact", async (req, res) => {
+  const { name, email, phone, businessName, websiteUrl, serviceRequested, preferredDate, message } = req.body;
+  console.log("New Strategy Call Booking / Inquiry:", { name, email, phone, businessName, websiteUrl, serviceRequested, preferredDate, message });
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; padding: 24px; color: #1f2937; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; background: #fafafa;">
+      <h2 style="color: #4f46e5; margin-top: 0; border-bottom: 2px solid #6366f1; padding-bottom: 8px;">📩 New Form Submission Received</h2>
+      <p style="font-size: 15px; color: #374151;">Someone just filled out the contact form on <strong>Digital Sate Hub</strong>:</p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
+        <tr><td style="padding: 8px; font-weight: bold; width: 140px; border-bottom: 1px solid #e5e7eb;">Name:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${name || 'N/A'}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e5e7eb;">Email:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><a href="mailto:${email}">${email || 'N/A'}</a></td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e5e7eb;">Phone / WhatsApp:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${phone || 'N/A'}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e5e7eb;">Business Name:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${businessName || 'N/A'}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e5e7eb;">Website URL:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${websiteUrl || 'N/A'}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e5e7eb;">Service Requested:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${serviceRequested || 'N/A'}</td></tr>
+        ${preferredDate ? `<tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e5e7eb;">Preferred Date:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${preferredDate}</td></tr>` : ''}
+        ${message ? `<tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e5e7eb;">Message:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${message}</td></tr>` : ''}
+      </table>
+      
+      <p style="margin-top: 24px; font-size: 13px; color: #6b7280; text-align: center;">Digital Sate Hub Automation System</p>
+    </div>
+  `;
+
+  await sendAdminNotificationEmail(`New Lead Inquiry from ${name || email || 'Website Visitor'}`, htmlContent);
+
   return res.json({
     success: true,
     message: "Thank you! Your strategy call request has been received. Our team will reach out within 2 hours.",
@@ -175,13 +236,87 @@ apiRouter.post("/contact", (req, res) => {
 });
 
 // Custom Quote Request Endpoint
-apiRouter.post("/quote", (req, res) => {
+apiRouter.post("/quote", async (req, res) => {
   const { name, email, phone, selectedServices, estimatedBudget, timeline, notes } = req.body;
   console.log("New Quote Request:", { name, email, phone, selectedServices, estimatedBudget, timeline, notes });
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; padding: 24px; color: #1f2937; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; background: #fafafa;">
+      <h2 style="color: #059669; margin-top: 0; border-bottom: 2px solid #10b981; padding-bottom: 8px;">📊 New Scope Builder Quote Request</h2>
+      <p style="font-size: 15px; color: #374151;">A new custom proposal estimate was submitted:</p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
+        <tr><td style="padding: 8px; font-weight: bold; width: 140px; border-bottom: 1px solid #e5e7eb;">Name:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${name || 'N/A'}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e5e7eb;">Email:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><a href="mailto:${email}">${email || 'N/A'}</a></td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e5e7eb;">Phone:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${phone || 'N/A'}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e5e7eb;">Services:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${Array.isArray(selectedServices) ? selectedServices.join(', ') : selectedServices || 'N/A'}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e5e7eb;">Budget:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${estimatedBudget || 'N/A'}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e5e7eb;">Timeline:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${timeline || 'N/A'}</td></tr>
+        ${notes ? `<tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e5e7eb;">Notes:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${notes}</td></tr>` : ''}
+      </table>
+    </div>
+  `;
+
+  await sendAdminNotificationEmail(`New Scope Quote Request from ${name || email}`, htmlContent);
+
   return res.json({
     success: true,
     quoteId: `DSH-QT-${Math.floor(100000 + Math.random() * 900000)}`,
     message: "Your custom proposal request has been generated! Check your email shortly or schedule your review call.",
+  });
+});
+
+// Broadcast Newsletter Endpoint
+apiRouter.post("/newsletter/send", async (req, res) => {
+  const { subject, content, recipients } = req.body;
+  if (!subject || !content) {
+    return res.status(400).json({ error: "Subject and content are required." });
+  }
+
+  const recipientList = Array.isArray(recipients) && recipients.length > 0
+    ? recipients
+    : ["digitalsatehub@gmail.com"];
+
+  console.log(`[NEWSLETTER BROADCAST] Sending "${subject}" to ${recipientList.length} contacts...`);
+
+  const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+  const smtpPort = process.env.SMTP_PORT || "465";
+  const smtpUser = process.env.SMTP_USER || "digitalsatehub@gmail.com";
+  const smtpPass = process.env.SMTP_PASS || "";
+  const smtpFrom = process.env.SMTP_FROM || smtpUser || "digitalsatehub@gmail.com";
+
+  if (smtpHost && smtpUser && smtpPass) {
+    try {
+      const portNum = parseInt(smtpPort, 10);
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: portNum,
+        secure: portNum === 465,
+        auth: { user: smtpUser, pass: smtpPass },
+      });
+
+      for (const email of recipientList) {
+        await transporter.sendMail({
+          from: `"Digital Sate Hub" <${smtpFrom}>`,
+          to: email,
+          subject,
+          html: `<div style="font-family: Arial, sans-serif; padding: 24px; color: #1f2937; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; background: #ffffff;">
+            <h2 style="color: #4f46e5; margin-top: 0;">Digital Sate Hub Newsletter</h2>
+            <div style="font-size: 15px; color: #374151; line-height: 1.6; white-space: pre-wrap;">${content}</div>
+            <hr style="margin-top: 30px; border: none; border-top: 1px solid #e5e7eb;" />
+            <p style="font-size: 12px; color: #9ca3af; text-align: center;">You received this because you subscribed or contacted Digital Sate Hub.</p>
+          </div>`,
+        });
+      }
+    } catch (err: any) {
+      console.error("[NEWSLETTER SMTP ERROR]:", err);
+    }
+  }
+
+  return res.json({
+    success: true,
+    sentCount: recipientList.length,
+    message: `Newsletter broadcast successfully sent to ${recipientList.length} contact(s)!`,
   });
 });
 

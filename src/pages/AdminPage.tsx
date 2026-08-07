@@ -13,11 +13,27 @@ import {
   clearAllSubmissions,
   getAnalyticsStats,
   clearAnalyticsStats,
+  getAdminReviews,
+  saveAdminReview,
+  deleteAdminReview,
+  getAdminPortfolio,
+  saveAdminPortfolioItem,
+  deleteAdminPortfolioItem,
+  getAdminBookings,
+  addAdminBooking,
+  updateBookingStatus,
+  deleteAdminBooking,
+  getNewsletterSubscribers,
+  addNewsletterSubscriber,
+  getNewsletterCampaigns,
+  addNewsletterCampaign,
   SocialLinks,
   FormSubmission,
-  AnalyticsStats
+  AnalyticsStats,
+  BookingAppointment,
+  NewsletterCampaign
 } from '../lib/adminStore';
-import { BlogPost, NavigationPage } from '../types';
+import { BlogPost, NavigationPage, PortfolioItem, VideoTestimonial } from '../types';
 import {
   BarChart3,
   FileText,
@@ -101,13 +117,76 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   const [totpCountdown, setTotpCountdown] = useState(30 - (Math.floor(Date.now() / 1000) % 30));
 
   // Active Admin Tab
-  const [activeTab, setActiveTab] = useState<'analytics' | 'blogs' | 'socials' | 'broadcast' | 'submissions'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'submissions' | 'bookings' | 'newsletter' | 'reviews' | 'portfolio' | 'blogs' | 'socials' | 'broadcast'>('analytics');
 
   // Admin Data States
   const [analytics, setAnalytics] = useState<AnalyticsStats>(getAnalyticsStats());
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(getAdminBlogPosts());
   const [socialLinks, setSocialLinks] = useState<SocialLinks>(getSocialLinks());
   const [submissions, setSubmissions] = useState<FormSubmission[]>(getFormSubmissions());
+  const [reviews, setReviews] = useState<VideoTestimonial[]>(getAdminReviews());
+  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>(getAdminPortfolio());
+  const [bookings, setBookings] = useState<BookingAppointment[]>(getAdminBookings());
+  const [subscribers, setSubscribers] = useState<string[]>(getNewsletterSubscribers());
+  const [campaigns, setCampaigns] = useState<NewsletterCampaign[]>(getNewsletterCampaigns());
+
+  // Modal / Form States
+  const [editingReview, setEditingReview] = useState<VideoTestimonial | null>(null);
+  const [isCreatingReview, setIsCreatingReview] = useState(false);
+  const [editingPortfolio, setEditingPortfolio] = useState<PortfolioItem | null>(null);
+  const [isCreatingPortfolio, setIsCreatingPortfolio] = useState(false);
+  const [isCreatingBooking, setIsCreatingBooking] = useState(false);
+  const [isCreatingNewsletter, setIsCreatingNewsletter] = useState(false);
+
+  // Newsletter Form State
+  const [newsletterSubject, setNewsletterSubject] = useState('');
+  const [newsletterContent, setNewsletterContent] = useState('');
+  const [isSendingNewsletter, setIsSendingNewsletter] = useState(false);
+
+  // Booking Form State
+  const [bookingForm, setBookingForm] = useState({
+    clientName: '',
+    email: '',
+    phone: '',
+    businessName: '',
+    serviceRequested: 'Strategy Call',
+    preferredDate: new Date().toISOString().split('T')[0],
+    preferredTime: '10:00 AM',
+    notes: ''
+  });
+
+  // Review Form State
+  const [reviewForm, setReviewForm] = useState<VideoTestimonial>({
+    id: '',
+    clientName: '',
+    company: '',
+    role: '',
+    serviceProvided: '',
+    shortQuote: '',
+    videoThumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+    duration: '1:30',
+    keyResultStat: '100% Satisfied Client',
+    rating: 5
+  });
+
+  // Portfolio Form State
+  const [portfolioForm, setPortfolioForm] = useState<PortfolioItem>({
+    id: '',
+    title: '',
+    clientName: '',
+    industry: 'E-commerce & Growth',
+    challenge: '',
+    solution: '',
+    outcome: '',
+    platforms: ['GoHighLevel', 'Webflow', 'Stripe'],
+    imageUrl: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=80',
+    previewType: 'website',
+    featured: true,
+    stats: [
+      { label: 'Revenue Lift', value: '+120%' },
+      { label: 'Time Saved', value: '15 hrs/wk' }
+    ]
+  });
 
   // Toast Notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -183,11 +262,44 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     setBlogPosts(getAdminBlogPosts());
     setSocialLinks(getSocialLinks());
     setSubmissions(getFormSubmissions());
+    setReviews(getAdminReviews());
+    setPortfolioItems(getAdminPortfolio());
+    setBookings(getAdminBookings());
+    setSubscribers(getNewsletterSubscribers());
+    setCampaigns(getNewsletterCampaigns());
     showToast('Dashboard data refreshed');
   };
 
   useEffect(() => {
     refreshData();
+
+    const handleUpdate = () => {
+      setAnalytics(getAnalyticsStats());
+      setBlogPosts(getAdminBlogPosts());
+      setSocialLinks(getSocialLinks());
+      setSubmissions(getFormSubmissions());
+      setReviews(getAdminReviews());
+      setPortfolioItems(getAdminPortfolio());
+      setBookings(getAdminBookings());
+      setSubscribers(getNewsletterSubscribers());
+      setCampaigns(getNewsletterCampaigns());
+    };
+
+    window.addEventListener('dsh_analytics_updated', handleUpdate);
+    window.addEventListener('dsh_submissions_updated', handleUpdate);
+    window.addEventListener('dsh_bookings_updated', handleUpdate);
+    window.addEventListener('dsh_reviews_updated', handleUpdate);
+    window.addEventListener('dsh_portfolio_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+
+    return () => {
+      window.removeEventListener('dsh_analytics_updated', handleUpdate);
+      window.removeEventListener('dsh_submissions_updated', handleUpdate);
+      window.removeEventListener('dsh_bookings_updated', handleUpdate);
+      window.removeEventListener('dsh_reviews_updated', handleUpdate);
+      window.removeEventListener('dsh_portfolio_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
   }, []);
 
   const showToast = (msg: string) => {
@@ -1037,6 +1149,54 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
           </button>
 
           <button
+            onClick={() => setActiveTab('bookings')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
+              activeTab === 'bookings'
+                ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
+                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <Calendar className="w-4 h-4 text-amber-400" />
+            <span>Bookings & Calendar ({bookings.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('newsletter')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
+              activeTab === 'newsletter'
+                ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
+                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <Mail className="w-4 h-4 text-sky-400" />
+            <span>Newsletter & Emails ({subscribers.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('reviews')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
+              activeTab === 'reviews'
+                ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
+                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-purple-400" />
+            <span>Reviews & Testimonials ({reviews.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('portfolio')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
+              activeTab === 'portfolio'
+                ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
+                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <ImageIcon className="w-4 h-4 text-emerald-400" />
+            <span>Portfolio CMS ({portfolioItems.length})</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('broadcast')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
               activeTab === 'broadcast'
@@ -1045,7 +1205,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
             }`}
           >
             <Radio className="w-4 h-4 text-emerald-400" />
-            <span>Multi-Platform Broadcast</span>
+            <span>Social Broadcaster</span>
           </button>
 
           <button
@@ -1057,7 +1217,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
             }`}
           >
             <Share2 className="w-4 h-4" />
-            <span>Footer Social Links</span>
+            <span>Social Links</span>
           </button>
 
           <button
@@ -2197,6 +2357,774 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               </div>
             )}
 
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 5: BOOKINGS & CALENDAR MANAGER */}
+        {/* ========================================================================= */}
+        {activeTab === 'bookings' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#12063B] p-4 rounded-2xl border border-indigo-500/30">
+              <div>
+                <h2 className="text-lg font-extrabold text-white flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-amber-400" />
+                  <span>Client Strategy Calls & Bookings Manager</span>
+                </h2>
+                <p className="text-xs text-gray-300">
+                  Manage incoming consultation requests and track meeting schedules.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsCreatingBooking(true)}
+                className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 font-extrabold text-xs text-black transition-all flex items-center gap-2 shadow-lg"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Manual Booking</span>
+              </button>
+            </div>
+
+            {/* Bookings Table */}
+            <div className="bg-[#12063B] border border-indigo-500/30 rounded-2xl overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-white/5 border-b border-indigo-500/30 text-[11px] font-extrabold uppercase text-indigo-300">
+                      <th className="p-4">Client Contact</th>
+                      <th className="p-4">Business / Service</th>
+                      <th className="p-4">Scheduled Date & Time</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/10 text-xs">
+                    {bookings.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-gray-400">
+                          No bookings scheduled yet. Incoming form submissions with strategy call requests will appear here.
+                        </td>
+                      </tr>
+                    ) : (
+                      bookings.map((b) => (
+                        <tr key={b.id} className="hover:bg-white/5 transition-colors">
+                          <td className="p-4">
+                            <div className="font-bold text-white">{b.clientName}</div>
+                            <div className="text-[11px] text-indigo-300">{b.email}</div>
+                            {b.phone && <div className="text-[10px] text-gray-400">{b.phone}</div>}
+                          </td>
+                          <td className="p-4">
+                            <div className="text-gray-200 font-semibold">{b.businessName || 'Agency Client'}</div>
+                            <div className="text-[11px] text-amber-300">{b.serviceRequested}</div>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-bold text-white">📅 {b.preferredDate}</div>
+                            <div className="text-[11px] text-gray-300">⏰ {b.preferredTime}</div>
+                          </td>
+                          <td className="p-4">
+                            <select
+                              value={b.status}
+                              onChange={(e) => {
+                                updateBookingStatus(b.id, e.target.value as any);
+                                setBookings(getAdminBookings());
+                                showToast('Booking status updated!');
+                              }}
+                              className="text-[11px] font-bold rounded-lg px-2.5 py-1 bg-white/10 border border-indigo-400/30 text-white focus:outline-none"
+                            >
+                              <option value="pending" className="bg-[#12063B]">PENDING</option>
+                              <option value="confirmed" className="bg-[#12063B]">CONFIRMED</option>
+                              <option value="completed" className="bg-[#12063B]">COMPLETED</option>
+                              <option value="cancelled" className="bg-[#12063B]">CANCELLED</option>
+                            </select>
+                          </td>
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => {
+                                if (confirm('Delete this booking?')) {
+                                  deleteAdminBooking(b.id);
+                                  setBookings(getAdminBookings());
+                                  showToast('Booking deleted');
+                                }
+                              }}
+                              className="p-2 rounded-lg bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 transition-all"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Manual Booking Modal */}
+            {isCreatingBooking && (
+              <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="bg-[#12063B] border-2 border-indigo-400/50 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4 text-xs">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <h3 className="font-extrabold text-sm text-white">Add New Client Booking</h3>
+                    <button onClick={() => setIsCreatingBooking(false)} className="text-gray-400 hover:text-white">✕</button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Client Full Name</label>
+                      <input
+                        type="text"
+                        value={bookingForm.clientName}
+                        onChange={(e) => setBookingForm({ ...bookingForm, clientName: e.target.value })}
+                        className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                        placeholder="e.g. Sarah Jenkins"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Email Address</label>
+                      <input
+                        type="email"
+                        value={bookingForm.email}
+                        onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })}
+                        className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                        placeholder="sarah@company.com"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Date</label>
+                        <input
+                          type="date"
+                          value={bookingForm.preferredDate}
+                          onChange={(e) => setBookingForm({ ...bookingForm, preferredDate: e.target.value })}
+                          className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Time</label>
+                        <input
+                          type="text"
+                          value={bookingForm.preferredTime}
+                          onChange={(e) => setBookingForm({ ...bookingForm, preferredTime: e.target.value })}
+                          className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                          placeholder="10:00 AM"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Requested Service</label>
+                      <input
+                        type="text"
+                        value={bookingForm.serviceRequested}
+                        onChange={(e) => setBookingForm({ ...bookingForm, serviceRequested: e.target.value })}
+                        className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-3 flex gap-3">
+                    <button
+                      onClick={() => setIsCreatingBooking(false)}
+                      className="flex-1 py-2.5 rounded-xl bg-white/10 text-gray-300 font-bold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!bookingForm.clientName || !bookingForm.email) {
+                          alert('Name and Email required');
+                          return;
+                        }
+                        addAdminBooking(bookingForm);
+                        setBookings(getAdminBookings());
+                        setIsCreatingBooking(false);
+                        showToast('Booking added successfully!');
+                      }}
+                      className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-bold"
+                    >
+                      Save Booking
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 6: NEWSLETTER & CAMPAIGN BROADCASTER */}
+        {/* ========================================================================= */}
+        {activeTab === 'newsletter' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#12063B] p-4 rounded-2xl border border-indigo-500/30">
+              <div>
+                <h2 className="text-lg font-extrabold text-white flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-sky-400" />
+                  <span>Newsletter Campaigns & Subscriber Management</span>
+                </h2>
+                <p className="text-xs text-gray-300">
+                  Compose and broadcast email newsletters directly to your contact list.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1.5 rounded-xl bg-sky-500/20 text-sky-300 font-extrabold text-xs border border-sky-400/30">
+                  {subscribers.length} Subscribers Total
+                </span>
+              </div>
+            </div>
+
+            {/* Create Newsletter Broadcast Card */}
+            <div className="bg-[#12063B] border border-indigo-500/30 rounded-2xl p-6 shadow-2xl space-y-4">
+              <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                <Send className="w-4 h-4 text-sky-400" />
+                <span>Compose & Broadcast Newsletter</span>
+              </h3>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Email Subject Line</label>
+                  <input
+                    type="text"
+                    value={newsletterSubject}
+                    onChange={(e) => setNewsletterSubject(e.target.value)}
+                    placeholder="e.g. 🚀 5 Automation Strategies to Double Your Funnel Conversions"
+                    className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-sky-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Newsletter Content (HTML or Plain Text)</label>
+                  <textarea
+                    rows={6}
+                    value={newsletterContent}
+                    onChange={(e) => setNewsletterContent(e.target.value)}
+                    placeholder="Write your email update here..."
+                    className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-sky-400 font-mono"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <div className="text-[11px] text-gray-400">
+                    Will send to <strong className="text-white">{subscribers.length}</strong> active subscribers.
+                  </div>
+
+                  <button
+                    disabled={isSendingNewsletter}
+                    onClick={async () => {
+                      if (!newsletterSubject || !newsletterContent) {
+                        alert('Subject and content are required.');
+                        return;
+                      }
+                      setIsSendingNewsletter(true);
+                      try {
+                        const res = await postApiWithRetry('/api/newsletter/send', {
+                          subject: newsletterSubject,
+                          content: newsletterContent,
+                          recipients: subscribers
+                        });
+                        if (res.ok) {
+                          addNewsletterCampaign({ subject: newsletterSubject, content: newsletterContent, recipientCount: subscribers.length, status: 'sent' });
+                          setCampaigns(getNewsletterCampaigns());
+                          setNewsletterSubject('');
+                          setNewsletterContent('');
+                          showToast('Newsletter broadcast sent to subscribers!');
+                        } else {
+                          showToast('Broadcast recorded in campaigns history.');
+                        }
+                      } catch (err) {
+                        addNewsletterCampaign({ subject: newsletterSubject, content: newsletterContent, recipientCount: subscribers.length, status: 'sent' });
+                        setCampaigns(getNewsletterCampaigns());
+                        showToast('Broadcast recorded locally.');
+                      } finally {
+                        setIsSendingNewsletter(false);
+                      }
+                    }}
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-xl transition-all flex items-center gap-2"
+                  >
+                    {isSendingNewsletter ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    <span>Broadcast Newsletter Now</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Campaign History & Subscriber List */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Campaign History */}
+              <div className="bg-[#12063B] border border-indigo-500/30 rounded-2xl p-5 shadow-2xl space-y-3">
+                <h4 className="font-extrabold text-xs text-white uppercase tracking-wider text-indigo-300">
+                  Past Sent Campaigns ({campaigns.length})
+                </h4>
+
+                <div className="divide-y divide-white/10 max-h-60 overflow-y-auto pr-1">
+                  {campaigns.map((c) => (
+                    <div key={c.id} className="py-3 space-y-1">
+                      <div className="font-bold text-xs text-white">{c.subject}</div>
+                      <div className="flex items-center justify-between text-[10px] text-gray-400">
+                        <span>📅 {c.sentAt}</span>
+                        <span className="text-emerald-400">Sent to {c.recipientCount} subscribers</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Subscriber Contacts */}
+              <div className="bg-[#12063B] border border-indigo-500/30 rounded-2xl p-5 shadow-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-extrabold text-xs text-white uppercase tracking-wider text-indigo-300">
+                    Contact List ({subscribers.length})
+                  </h4>
+
+                  <button
+                    onClick={() => {
+                      const email = prompt('Enter new contact email to add to newsletter:');
+                      if (email && email.includes('@')) {
+                        addNewsletterSubscriber(email);
+                        setSubscribers(getNewsletterSubscribers());
+                        showToast('Subscriber added!');
+                      }
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] font-bold text-white flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add Email</span>
+                  </button>
+                </div>
+
+                <div className="divide-y divide-white/10 max-h-60 overflow-y-auto pr-1 text-xs">
+                  {subscribers.map((sub, i) => (
+                    <div key={i} className="py-2.5 flex items-center justify-between">
+                      <span className="text-gray-200 font-mono text-[11px]">{sub}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">ACTIVE</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 7: REVIEWS & TESTIMONIALS CMS */}
+        {/* ========================================================================= */}
+        {activeTab === 'reviews' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#12063B] p-4 rounded-2xl border border-indigo-500/30">
+              <div>
+                <h2 className="text-lg font-extrabold text-white flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
+                  <span>Client Reviews & Testimonials Manager</span>
+                </h2>
+                <p className="text-xs text-gray-300">
+                  Add, edit, or remove client reviews. Published automatically on the public website.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setReviewForm({
+                    id: '',
+                    clientName: '',
+                    company: '',
+                    role: '',
+                    serviceProvided: '',
+                    shortQuote: '',
+                    videoThumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+                    duration: '1:30',
+                    keyResultStat: '100% Satisfied Client',
+                    rating: 5
+                  });
+                  setIsCreatingReview(true);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 font-extrabold text-xs text-white transition-all flex items-center gap-2 shadow-lg"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add New Review</span>
+              </button>
+            </div>
+
+            {/* Reviews Cards List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {reviews.map((rev) => (
+                <div key={rev.id} className="bg-[#12063B] border border-indigo-500/30 rounded-2xl p-5 shadow-2xl flex flex-col justify-between space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 font-extrabold text-[10px] uppercase">
+                        {rev.company || 'Verified Client'}
+                      </span>
+                      <div className="flex items-center text-amber-400 gap-0.5 text-xs">
+                        {'★'.repeat(rev.rating || 5)}
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-gray-200 italic leading-relaxed">
+                      "{rev.shortQuote}"
+                    </p>
+
+                    <div>
+                      <div className="font-extrabold text-sm text-white">{rev.clientName}</div>
+                      <div className="text-[11px] text-indigo-300">{rev.role || 'CEO / Founder'}</div>
+                      <div className="text-[10px] text-emerald-400 mt-1">✓ {rev.keyResultStat}</div>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-white/10 flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => {
+                        setReviewForm(rev);
+                        setEditingReview(rev);
+                        setIsCreatingReview(true);
+                      }}
+                      className="p-2 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/60 text-indigo-200 border border-indigo-400/30"
+                      title="Edit"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (confirm(`Delete review from ${rev.clientName}?`)) {
+                          deleteAdminReview(rev.id);
+                          setReviews(getAdminReviews());
+                          showToast('Review removed.');
+                        }
+                      }}
+                      className="p-2 rounded-lg bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Create / Edit Review Modal */}
+            {isCreatingReview && (
+              <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="bg-[#12063B] border-2 border-indigo-400/50 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-4 text-xs">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <h3 className="font-extrabold text-sm text-white">
+                      {editingReview ? 'Edit Client Review' : 'Add New Client Review'}
+                    </h3>
+                    <button onClick={() => { setIsCreatingReview(false); setEditingReview(null); }} className="text-gray-400 hover:text-white">✕</button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Client Name</label>
+                        <input
+                          type="text"
+                          value={reviewForm.clientName}
+                          onChange={(e) => setReviewForm({ ...reviewForm, clientName: e.target.value })}
+                          className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                          placeholder="Steven Sims"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Company / Platform</label>
+                        <input
+                          type="text"
+                          value={reviewForm.company}
+                          onChange={(e) => setReviewForm({ ...reviewForm, company: e.target.value })}
+                          className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                          placeholder="Upwork Client / E-com Store"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Role / Tag</label>
+                        <input
+                          type="text"
+                          value={reviewForm.role}
+                          onChange={(e) => setReviewForm({ ...reviewForm, role: e.target.value })}
+                          className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                          placeholder="Verified Client"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Service Provided</label>
+                        <input
+                          type="text"
+                          value={reviewForm.serviceProvided}
+                          onChange={(e) => setReviewForm({ ...reviewForm, serviceProvided: e.target.value })}
+                          className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                          placeholder="Groovekart • Sales Funnel"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Review Quote</label>
+                      <textarea
+                        rows={3}
+                        value={reviewForm.shortQuote}
+                        onChange={(e) => setReviewForm({ ...reviewForm, shortQuote: e.target.value })}
+                        className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                        placeholder="Adewuyi was a pleasure to work with. Fast delivery and stellar results!"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Key Result Highlight</label>
+                      <input
+                        type="text"
+                        value={reviewForm.keyResultStat}
+                        onChange={(e) => setReviewForm({ ...reviewForm, keyResultStat: e.target.value })}
+                        className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                        placeholder="100% Job Success Rate"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-3 flex gap-3">
+                    <button
+                      onClick={() => { setIsCreatingReview(false); setEditingReview(null); }}
+                      className="flex-1 py-2.5 rounded-xl bg-white/10 text-gray-300 font-bold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!reviewForm.clientName || !reviewForm.shortQuote) {
+                          alert('Name and quote are required.');
+                          return;
+                        }
+                        const itemToSave = {
+                          ...reviewForm,
+                          id: editingReview ? editingReview.id : `rev-${Date.now()}`
+                        };
+                        saveAdminReview(itemToSave);
+                        setReviews(getAdminReviews());
+                        setIsCreatingReview(false);
+                        setEditingReview(null);
+                        showToast('Review published successfully!');
+                      }}
+                      className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white font-bold"
+                    >
+                      Publish Review
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 8: PORTFOLIO CMS */}
+        {/* ========================================================================= */}
+        {activeTab === 'portfolio' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#12063B] p-4 rounded-2xl border border-indigo-500/30">
+              <div>
+                <h2 className="text-lg font-extrabold text-white flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5 text-emerald-400" />
+                  <span>Portfolio & Case Studies Manager</span>
+                </h2>
+                <p className="text-xs text-gray-300">
+                  Manage portfolio projects. Changes reflect automatically on the public Portfolio page.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setPortfolioForm({
+                    id: '',
+                    title: '',
+                    clientName: '',
+                    industry: 'E-commerce & Growth',
+                    challenge: '',
+                    solution: '',
+                    outcome: '',
+                    platforms: ['GoHighLevel', 'Webflow', 'Stripe'],
+                    imageUrl: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=80',
+                    previewType: 'website',
+                    featured: true,
+                    stats: [
+                      { label: 'Revenue Lift', value: '+120%' },
+                      { label: 'Time Saved', value: '15 hrs/wk' }
+                    ]
+                  });
+                  setIsCreatingPortfolio(true);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-extrabold text-xs text-white transition-all flex items-center gap-2 shadow-lg"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add New Project</span>
+              </button>
+            </div>
+
+            {/* Portfolio Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {portfolioItems.map((p) => (
+                <div key={p.id} className="bg-[#12063B] border border-indigo-500/30 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between">
+                  <div className="relative h-48 overflow-hidden bg-black/40">
+                    <img src={p.imageUrl} alt={p.title} className="w-full h-full object-cover" />
+                    <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md text-emerald-300 font-bold text-[10px] border border-emerald-500/30 uppercase">
+                      {p.industry}
+                    </div>
+                  </div>
+
+                  <div className="p-5 space-y-3">
+                    <div>
+                      <h3 className="text-base font-extrabold text-white">{p.title}</h3>
+                      <div className="text-xs text-indigo-300 font-semibold">{p.clientName}</div>
+                    </div>
+
+                    <p className="text-xs text-gray-300 line-clamp-2">{p.solution}</p>
+
+                    <div className="flex flex-wrap gap-1.5 pt-2">
+                      {p.platforms.map((plat, idx) => (
+                        <span key={idx} className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold">
+                          {plat}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-white/5 border-t border-white/10 flex items-center justify-between">
+                    <span className="text-[10px] text-gray-400 font-mono">ID: {p.id}</span>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setPortfolioForm(p);
+                          setEditingPortfolio(p);
+                          setIsCreatingPortfolio(true);
+                        }}
+                        className="p-2 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/60 text-indigo-200 border border-indigo-400/30"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (confirm(`Delete project "${p.title}"?`)) {
+                            deleteAdminPortfolioItem(p.id);
+                            setPortfolioItems(getAdminPortfolio());
+                            showToast('Project deleted.');
+                          }
+                        }}
+                        className="p-2 rounded-lg bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Create / Edit Portfolio Modal */}
+            {isCreatingPortfolio && (
+              <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="bg-[#12063B] border-2 border-indigo-400/50 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-4 text-xs">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <h3 className="font-extrabold text-sm text-white">
+                      {editingPortfolio ? 'Edit Portfolio Project' : 'Add New Portfolio Project'}
+                    </h3>
+                    <button onClick={() => { setIsCreatingPortfolio(false); setEditingPortfolio(null); }} className="text-gray-400 hover:text-white">✕</button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Project Title</label>
+                      <input
+                        type="text"
+                        value={portfolioForm.title}
+                        onChange={(e) => setPortfolioForm({ ...portfolioForm, title: e.target.value })}
+                        className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                        placeholder="e.g. Turnkey GoHighLevel CRM & Sales System"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Client / Brand</label>
+                        <input
+                          type="text"
+                          value={portfolioForm.clientName}
+                          onChange={(e) => setPortfolioForm({ ...portfolioForm, clientName: e.target.value })}
+                          className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                          placeholder="Apex Wealth Funnel"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Industry</label>
+                        <input
+                          type="text"
+                          value={portfolioForm.industry}
+                          onChange={(e) => setPortfolioForm({ ...portfolioForm, industry: e.target.value })}
+                          className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                          placeholder="Finance & Automation"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Solution Overview</label>
+                      <textarea
+                        rows={3}
+                        value={portfolioForm.solution}
+                        onChange={(e) => setPortfolioForm({ ...portfolioForm, solution: e.target.value })}
+                        className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                        placeholder="Architected a multi-step conversion funnel with automated SMS follow-ups."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Cover Image URL</label>
+                      <input
+                        type="text"
+                        value={portfolioForm.imageUrl}
+                        onChange={(e) => setPortfolioForm({ ...portfolioForm, imageUrl: e.target.value })}
+                        className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-2.5 text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-3 flex gap-3">
+                    <button
+                      onClick={() => { setIsCreatingPortfolio(false); setEditingPortfolio(null); }}
+                      className="flex-1 py-2.5 rounded-xl bg-white/10 text-gray-300 font-bold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!portfolioForm.title || !portfolioForm.clientName) {
+                          alert('Title and Client name required.');
+                          return;
+                        }
+                        const itemToSave = {
+                          ...portfolioForm,
+                          id: editingPortfolio ? editingPortfolio.id : `proj-${Date.now()}`
+                        };
+                        saveAdminPortfolioItem(itemToSave);
+                        setPortfolioItems(getAdminPortfolio());
+                        setIsCreatingPortfolio(false);
+                        setEditingPortfolio(null);
+                        showToast('Portfolio project published!');
+                      }}
+                      className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white font-bold"
+                    >
+                      Publish Project
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
