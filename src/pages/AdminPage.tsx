@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { InteractiveBoxGrid } from '../components/InteractiveBoxGrid';
 import { LOGO_URL } from '../data/siteData';
 import {
@@ -72,7 +72,20 @@ import {
   Smartphone,
   QrCode,
   ShieldCheck,
-  Copy
+  Copy,
+  Menu,
+  X,
+  ChevronUp,
+  ChevronDown,
+  Layers,
+  Users,
+  CheckSquare,
+  Square,
+  Monitor,
+  Layout,
+  Type,
+  MousePointer,
+  Minus
 } from 'lucide-react';
 
 interface AdminPageProps {
@@ -87,6 +100,100 @@ interface BroadcastLog {
   channels: string[];
   stats: { impressions: number; likes: number; shares: number };
 }
+
+export type NewsletterSectionType = 'header' | 'text' | 'image' | 'cta' | 'divider' | 'footer';
+
+export interface NewsletterSection {
+  id: string;
+  type: NewsletterSectionType;
+  headerTitle?: string;
+  headerSubtitle?: string;
+  headerBgColor?: string;
+  heading?: string;
+  bodyText?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  imageUrl?: string;
+  imageAlt?: string;
+  imageCaption?: string;
+  buttonText?: string;
+  buttonUrl?: string;
+  buttonColor?: string;
+  dividerStyle?: 'solid' | 'dashed' | 'dotted';
+}
+
+const compileSectionsToHtml = (subject: string, sections: NewsletterSection[]): string => {
+  let html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; margin: 0; padding: 20px; color: #1f2937; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .content { padding: 24px; }
+    h1, h2, h3 { color: #111827; margin-top: 0; }
+    p { line-height: 1.6; color: #374151; font-size: 15px; }
+    .btn { display: inline-block; padding: 12px 28px; font-weight: bold; text-decoration: none; border-radius: 8px; color: #ffffff; text-align: center; }
+    .divider { border: 0; border-top: 1px solid #e5e7eb; margin: 24px 0; }
+    .footer { padding: 20px; text-align: center; font-size: 12px; color: #6b7280; background-color: #f9fafb; border-top: 1px solid #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+`;
+
+  sections.forEach((sec) => {
+    if (sec.type === 'header') {
+      html += `
+    <div style="background-color: ${sec.headerBgColor || '#1817B6'}; padding: 32px 24px; text-align: center; color: #ffffff;">
+      <h1 style="margin:0; font-size: 24px; font-weight: 800; color: #ffffff;">${sec.headerTitle || 'Digital Sate Hub'}</h1>
+      ${sec.headerSubtitle ? `<p style="margin: 8px 0 0 0; color: #c7d2fe; font-size: 14px;">${sec.headerSubtitle}</p>` : ''}
+    </div>
+`;
+    } else if (sec.type === 'text') {
+      html += `
+    <div style="padding: 20px 24px; text-align: ${sec.textAlign || 'left'};">
+      ${sec.heading ? `<h2 style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">${sec.heading}</h2>` : ''}
+      <p style="white-space: pre-line; margin: 0;">${sec.bodyText || ''}</p>
+    </div>
+`;
+    } else if (sec.type === 'image') {
+      html += `
+    <div style="padding: 12px 24px; text-align: center;">
+      ${sec.imageUrl ? `<img src="${sec.imageUrl}" alt="${sec.imageAlt || ''}" style="max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto;" />` : ''}
+      ${sec.imageCaption ? `<p style="font-size: 12px; color: #6b7280; margin-top: 6px;">${sec.imageCaption}</p>` : ''}
+    </div>
+`;
+    } else if (sec.type === 'cta') {
+      html += `
+    <div style="padding: 20px 24px; text-align: center;">
+      <a href="${sec.buttonUrl || '#'}" class="btn" style="background-color: ${sec.buttonColor || '#1817B6'}; color: #ffffff; display: inline-block; padding: 12px 28px; font-weight: bold; text-decoration: none; border-radius: 8px;">${sec.buttonText || 'Learn More'}</a>
+    </div>
+`;
+    } else if (sec.type === 'divider') {
+      html += `
+    <div style="padding: 8px 24px;">
+      <hr style="border: 0; border-top: 1px ${sec.dividerStyle || 'solid'} #e5e7eb; margin: 16px 0;" />
+    </div>
+`;
+    } else if (sec.type === 'footer') {
+      html += `
+    <div class="footer">
+      <p style="margin: 0; font-weight: bold; color: #374151;">Digital Sate Hub</p>
+      <p style="margin: 4px 0 0 0;">Growth Automation & Web Architecture • <a href="https://digitalsatehub.com" style="color: #4f46e5;">digitalsatehub.com</a></p>
+      <p style="margin: 12px 0 0 0; font-size: 11px; color: #9ca3af;">You received this email because you requested updates or services from Digital Sate Hub.</p>
+    </div>
+`;
+    }
+  });
+
+  html += `
+  </div>
+</body>
+</html>`;
+  return html;
+};
 
 const AUTHORIZED_GMAIL = 'digitalsatehub@gmail.com';
 
@@ -139,9 +246,153 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   const [isCreatingNewsletter, setIsCreatingNewsletter] = useState(false);
 
   // Newsletter Form State
-  const [newsletterSubject, setNewsletterSubject] = useState('');
+  const [newsletterSubject, setNewsletterSubject] = useState('🚀 5 Automation Strategies to Scale Your Business in 2026');
   const [newsletterContent, setNewsletterContent] = useState('');
   const [isSendingNewsletter, setIsSendingNewsletter] = useState(false);
+
+  // GoHighLevel Sidebar Open State
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Newsletter Section Builder State
+  const [newsletterSections, setNewsletterSections] = useState<NewsletterSection[]>([
+    {
+      id: 'sec-header',
+      type: 'header',
+      headerTitle: 'Digital Sate Hub',
+      headerSubtitle: 'Growth Automation & Web Architecture Digest',
+      headerBgColor: '#1817B6'
+    },
+    {
+      id: 'sec-welcome',
+      type: 'text',
+      heading: '🚀 5 High-Converting Funnel Strategies for 2026',
+      bodyText: 'Hey there,\n\nWe recently analyzed over 50+ client funnels built on GoHighLevel and Groovekart. Here are the top insights that drove a 2.4x conversion bump in less than 30 days.\n\n1. Automated SMS Speed-to-Lead\n2. Dynamic Multi-Step Questionnaires\n3. One-Click Stripe Upsells',
+      textAlign: 'left'
+    },
+    {
+      id: 'sec-image',
+      type: 'image',
+      imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80',
+      imageAlt: 'Growth Analytics Dashboard',
+      imageCaption: 'Real-time Conversion Analytics Dashboard built for high-growth agencies.'
+    },
+    {
+      id: 'sec-cta',
+      type: 'cta',
+      buttonText: 'Book Your Free Strategy Audit',
+      buttonUrl: 'https://digitalsatehub.com',
+      buttonColor: '#1817B6'
+    },
+    {
+      id: 'sec-divider',
+      type: 'divider',
+      dividerStyle: 'solid'
+    },
+    {
+      id: 'sec-footer',
+      type: 'footer'
+    }
+  ]);
+
+  // Newsletter Preview Mode
+  const [emailPreviewTab, setEmailPreviewTab] = useState<'desktop' | 'mobile'>('desktop');
+
+  // Contact Selector Filter & Selections
+  const [contactSearch, setContactSearch] = useState('');
+  const [selectedContactEmails, setSelectedContactEmails] = useState<string[]>([]);
+
+  // Consolidated Unique Contact List
+  const allContactsList = useMemo(() => {
+    const map = new Map<string, { email: string; name: string; source: string }>();
+
+    subscribers.forEach((email) => {
+      if (email) {
+        map.set(email.toLowerCase(), {
+          email,
+          name: email.split('@')[0],
+          source: 'Newsletter List'
+        });
+      }
+    });
+
+    submissions.forEach((s) => {
+      if (s.email) {
+        const existing = map.get(s.email.toLowerCase());
+        map.set(s.email.toLowerCase(), {
+          email: s.email,
+          name: s.name || existing?.name || s.email.split('@')[0],
+          source: existing ? `${existing.source}, Form Submission` : 'Form Lead'
+        });
+      }
+    });
+
+    bookings.forEach((b) => {
+      if (b.email) {
+        const existing = map.get(b.email.toLowerCase());
+        map.set(b.email.toLowerCase(), {
+          email: b.email,
+          name: b.clientName || existing?.name || b.email.split('@')[0],
+          source: existing ? `${existing.source}, Booking Client` : 'Booking Client'
+        });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [subscribers, submissions, bookings]);
+
+  // Sync selected contact emails on load
+  useEffect(() => {
+    if (selectedContactEmails.length === 0 && allContactsList.length > 0) {
+      setSelectedContactEmails(allContactsList.map((c) => c.email));
+    }
+  }, [allContactsList]);
+
+  // Filtered contacts list
+  const filteredContacts = useMemo(() => {
+    if (!contactSearch.trim()) return allContactsList;
+    const q = contactSearch.toLowerCase();
+    return allContactsList.filter(
+      (c) => c.email.toLowerCase().includes(q) || c.name.toLowerCase().includes(q) || c.source.toLowerCase().includes(q)
+    );
+  }, [allContactsList, contactSearch]);
+
+  // Section builder helper handlers
+  const addNewsletterSection = (type: NewsletterSectionType) => {
+    const newSec: NewsletterSection = {
+      id: `sec-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      type,
+      ...(type === 'header' && { headerTitle: 'Digital Sate Hub', headerSubtitle: 'New Campaign Heading', headerBgColor: '#1817B6' }),
+      ...(type === 'text' && { heading: 'Section Title', bodyText: 'Write text here...', textAlign: 'left' }),
+      ...(type === 'image' && { imageUrl: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&auto=format&fit=crop&q=80', imageAlt: 'Campaign Image', imageCaption: 'Image Caption' }),
+      ...(type === 'cta' && { buttonText: 'Click Here', buttonUrl: 'https://digitalsatehub.com', buttonColor: '#1817B6' }),
+      ...(type === 'divider' && { dividerStyle: 'solid' }),
+      ...(type === 'footer' && {})
+    };
+    setNewsletterSections([...newsletterSections, newSec]);
+  };
+
+  const updateNewsletterSection = (id: string, updated: Partial<NewsletterSection>) => {
+    setNewsletterSections(newsletterSections.map((s) => (s.id === id ? { ...s, ...updated } : s)));
+  };
+
+  const moveNewsletterSection = (index: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === newsletterSections.length - 1) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    const copy = [...newsletterSections];
+    const temp = copy[index];
+    copy[index] = copy[targetIndex];
+    copy[targetIndex] = temp;
+    setNewsletterSections(copy);
+  };
+
+  const deleteNewsletterSection = (id: string) => {
+    if (newsletterSections.length <= 1) {
+      alert('At least one section is required in the newsletter template.');
+      return;
+    }
+    setNewsletterSections(newsletterSections.filter((s) => s.id !== id));
+  };
 
   // Booking Form State
   const [bookingForm, setBookingForm] = useState({
@@ -1060,7 +1311,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
   // AUTHENTICATED DASHBOARD
   return (
-    <div className="min-h-screen bg-[#0b0526] text-white flex flex-col font-sans">
+    <div className="min-h-screen bg-[#0b0526] text-white flex font-sans relative overflow-x-hidden">
       
       {/* Toast Banner */}
       {toastMessage && (
@@ -1070,172 +1321,290 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Admin Top Navigation Bar */}
-      <header className="bg-[#12063B] border-b border-indigo-900/60 sticky top-0 z-40 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-          
-          {/* Studio Brand Logo & Title */}
+      {/* MOBILE OVERLAY BACKDROP */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 md:hidden"
+        />
+      )}
+
+      {/* LEFT NAVIGATION SIDEBAR (GoHighLevel Style) */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0a0420] border-r border-indigo-900/60 flex flex-col transition-transform duration-300 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        
+        {/* Sidebar Header */}
+        <div className="p-4 border-b border-indigo-900/60 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#1817B6] border border-indigo-400/40 flex items-center justify-center text-white shadow-lg">
-              <Lock className="w-5 h-5 text-indigo-300" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 border border-indigo-400/40 flex items-center justify-center text-white shadow-lg font-black text-sm">
+              DH
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-black text-lg text-white">Digital Sate Hub</span>
-                <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-[10px] font-extrabold text-indigo-300 uppercase">
-                  Admin /joju
-                </span>
+              <div className="font-extrabold text-sm text-white flex items-center gap-1.5">
+                <span>Digital Sate Hub</span>
               </div>
-              <div className="text-[11px] text-gray-400">Authenticated as {AUTHORIZED_GMAIL}</div>
+              <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>GoHighLevel Admin</span>
+              </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => onNavigate('home')}
-              className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-gray-200 transition-all flex items-center gap-2"
-            >
-              <Globe className="w-4 h-4 text-indigo-400" />
-              <span className="hidden sm:inline">View Public Website</span>
-            </button>
-
-            <button
-              onClick={refreshData}
-              className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 transition-all"
-              title="Refresh Analytics & Submissions"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={handleLogout}
-              className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-bold text-rose-300 transition-all flex items-center gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Lock / Exit</span>
-            </button>
-          </div>
-
+          <button onClick={() => setSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-white p-1">
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Tab Selection Navigation */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 overflow-x-auto pb-3">
+        {/* Search Menu Input */}
+        <div className="px-3 py-3 border-b border-indigo-900/40">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              placeholder="Search menu..."
+              className="w-full bg-white/5 border border-indigo-500/20 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-400"
+            />
+          </div>
+        </div>
+
+        {/* Sidebar Navigation Items */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 text-xs">
+          
+          <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+            Core Operations
+          </div>
+
           <button
-            onClick={() => setActiveTab('analytics')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
+            onClick={() => { setActiveTab('analytics'); setSidebarOpen(false); }}
+            className={`w-full px-3 py-2.5 rounded-xl font-bold flex items-center justify-between transition-all ${
               activeTab === 'analytics'
-                ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
-                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
+                ? 'bg-[#1817B6] text-white shadow-lg border border-indigo-400/40'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <BarChart3 className="w-4 h-4" />
-            <span>Website Analytics</span>
+            <div className="flex items-center gap-2.5">
+              <BarChart3 className="w-4 h-4 text-indigo-400" />
+              <span>Dashboard</span>
+            </div>
           </button>
 
           <button
-            onClick={() => setActiveTab('submissions')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
+            onClick={() => { setActiveTab('submissions'); setSidebarOpen(false); }}
+            className={`w-full px-3 py-2.5 rounded-xl font-bold flex items-center justify-between transition-all ${
               activeTab === 'submissions'
-                ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
-                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
+                ? 'bg-[#1817B6] text-white shadow-lg border border-indigo-400/40'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Inbox className="w-4 h-4" />
-            <span>Form Inbox ({submissions.length})</span>
-            {submissions.some((s) => s.status === 'new') && (
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <div className="flex items-center gap-2.5">
+              <Inbox className="w-4 h-4 text-sky-400" />
+              <span>Conversations</span>
+            </div>
+            {submissions.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-extrabold text-[10px]">
+                {submissions.length}
+              </span>
             )}
           </button>
 
           <button
-            onClick={() => setActiveTab('bookings')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
+            onClick={() => { setActiveTab('bookings'); setSidebarOpen(false); }}
+            className={`w-full px-3 py-2.5 rounded-xl font-bold flex items-center justify-between transition-all ${
               activeTab === 'bookings'
-                ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
-                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
+                ? 'bg-[#1817B6] text-white shadow-lg border border-indigo-400/40'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Calendar className="w-4 h-4 text-amber-400" />
-            <span>Bookings & Calendar ({bookings.length})</span>
+            <div className="flex items-center gap-2.5">
+              <Calendar className="w-4 h-4 text-amber-400" />
+              <span>Calendars & Bookings</span>
+            </div>
+            {bookings.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-extrabold text-[10px]">
+                {bookings.length}
+              </span>
+            )}
           </button>
 
           <button
-            onClick={() => setActiveTab('newsletter')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
+            onClick={() => { setActiveTab('newsletter'); setSidebarOpen(false); }}
+            className={`w-full px-3 py-2.5 rounded-xl font-bold flex items-center justify-between transition-all ${
               activeTab === 'newsletter'
-                ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
-                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
+                ? 'bg-[#1817B6] text-white shadow-lg border border-indigo-400/40'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Mail className="w-4 h-4 text-sky-400" />
-            <span>Newsletter & Emails ({subscribers.length})</span>
+            <div className="flex items-center gap-2.5">
+              <Mail className="w-4 h-4 text-emerald-400" />
+              <span>Email & Newsletter</span>
+            </div>
+            {allContactsList.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold text-[10px]">
+                {allContactsList.length}
+              </span>
+            )}
           </button>
 
+          <div className="pt-4 px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+            Content & CMS
+          </div>
+
           <button
-            onClick={() => setActiveTab('reviews')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
+            onClick={() => { setActiveTab('reviews'); setSidebarOpen(false); }}
+            className={`w-full px-3 py-2.5 rounded-xl font-bold flex items-center justify-between transition-all ${
               activeTab === 'reviews'
-                ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
-                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
+                ? 'bg-[#1817B6] text-white shadow-lg border border-indigo-400/40'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            <span>Reviews & Testimonials ({reviews.length})</span>
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              <span>Reputation / Reviews</span>
+            </div>
+            <span className="text-[10px] text-gray-500">{reviews.length}</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('portfolio')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
+            onClick={() => { setActiveTab('portfolio'); setSidebarOpen(false); }}
+            className={`w-full px-3 py-2.5 rounded-xl font-bold flex items-center justify-between transition-all ${
               activeTab === 'portfolio'
-                ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
-                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
+                ? 'bg-[#1817B6] text-white shadow-lg border border-indigo-400/40'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <ImageIcon className="w-4 h-4 text-emerald-400" />
-            <span>Portfolio CMS ({portfolioItems.length})</span>
+            <div className="flex items-center gap-2.5">
+              <ImageIcon className="w-4 h-4 text-teal-400" />
+              <span>Portfolio Case Studies</span>
+            </div>
+            <span className="text-[10px] text-gray-500">{portfolioItems.length}</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('broadcast')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
-              activeTab === 'broadcast'
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 border-indigo-400/50 text-white shadow-lg'
-                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
-            }`}
-          >
-            <Radio className="w-4 h-4 text-emerald-400" />
-            <span>Social Broadcaster</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('socials')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
-              activeTab === 'socials'
-                ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
-                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
-            }`}
-          >
-            <Share2 className="w-4 h-4" />
-            <span>Social Links</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('blogs')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
+            onClick={() => { setActiveTab('blogs'); setSidebarOpen(false); }}
+            className={`w-full px-3 py-2.5 rounded-xl font-bold flex items-center justify-between transition-all ${
               activeTab === 'blogs'
-                ? 'bg-[#1817B6] border-indigo-400/50 text-white shadow-lg'
-                : 'bg-white/5 border-transparent text-gray-400 hover:text-white hover:bg-white/10'
+                ? 'bg-[#1817B6] text-white shadow-lg border border-indigo-400/40'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <FileText className="w-4 h-4" />
-            <span>Blog Manager ({blogPosts.length})</span>
+            <div className="flex items-center gap-2.5">
+              <FileText className="w-4 h-4 text-orange-400" />
+              <span>Blog Articles</span>
+            </div>
+            <span className="text-[10px] text-gray-500">{blogPosts.length}</span>
           </button>
-        </div>
-      </header>
 
-      {/* Main Dashboard Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="pt-4 px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+            Marketing & Links
+          </div>
+
+          <button
+            onClick={() => { setActiveTab('broadcast'); setSidebarOpen(false); }}
+            className={`w-full px-3 py-2.5 rounded-xl font-bold flex items-center justify-between transition-all ${
+              activeTab === 'broadcast'
+                ? 'bg-[#1817B6] text-white shadow-lg border border-indigo-400/40'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Radio className="w-4 h-4 text-rose-400" />
+              <span>Social Broadcaster</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('socials'); setSidebarOpen(false); }}
+            className={`w-full px-3 py-2.5 rounded-xl font-bold flex items-center justify-between transition-all ${
+              activeTab === 'socials'
+                ? 'bg-[#1817B6] text-white shadow-lg border border-indigo-400/40'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Share2 className="w-4 h-4 text-indigo-300" />
+              <span>Footer Social Links</span>
+            </div>
+          </button>
+
+        </nav>
+
+        {/* Sidebar Footer Actions */}
+        <div className="p-3 border-t border-indigo-900/60 bg-[#070318] space-y-1 text-xs">
+          <button
+            onClick={() => onNavigate('home')}
+            className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-bold flex items-center gap-2.5 transition-all"
+          >
+            <Globe className="w-4 h-4 text-indigo-400" />
+            <span>View Public Site</span>
+          </button>
+
+          <div className="flex items-center gap-1 pt-1">
+            <button
+              onClick={refreshData}
+              className="flex-1 py-2 px-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-bold flex items-center justify-center gap-1.5 transition-all text-[11px]"
+              title="Refresh Data"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Refresh</span>
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="flex-1 py-2 px-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-bold flex items-center justify-center gap-1.5 border border-rose-500/30 transition-all text-[11px]"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Lock</span>
+            </button>
+          </div>
+        </div>
+
+      </aside>
+
+      {/* RIGHT MAIN WORKSPACE */}
+      <div className="md:pl-64 flex flex-col flex-1 min-h-screen w-full">
+        
+        {/* Top Header Bar */}
+        <header className="bg-[#12063B]/90 border-b border-indigo-900/60 sticky top-0 z-30 backdrop-blur-xl h-16 px-4 sm:px-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="md:hidden p-2 rounded-xl bg-white/5 text-gray-300 hover:text-white"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <h1 className="text-base sm:text-lg font-extrabold text-white capitalize flex items-center gap-2">
+              {activeTab === 'analytics' && 'Dashboard Overview'}
+              {activeTab === 'submissions' && 'Conversations & Form Inbox'}
+              {activeTab === 'bookings' && 'Calendars & Strategy Bookings'}
+              {activeTab === 'newsletter' && 'Email & Newsletter Builder'}
+              {activeTab === 'reviews' && 'Reputation & Reviews CMS'}
+              {activeTab === 'portfolio' && 'Portfolio & Case Studies'}
+              {activeTab === 'blogs' && 'Blog Articles CMS'}
+              {activeTab === 'broadcast' && 'Multi-Platform Broadcaster'}
+              {activeTab === 'socials' && 'Social Media Links'}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-950/80 border border-indigo-500/30 text-xs font-bold text-indigo-300">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>2FA Active</span>
+            </div>
+
+            <div className="flex items-center gap-2 pl-2 border-l border-white/10">
+              <div className="w-8 h-8 rounded-full bg-indigo-600 border border-indigo-400 flex items-center justify-center font-bold text-xs text-white">
+                A
+              </div>
+              <div className="hidden lg:block text-left">
+                <div className="text-xs font-bold text-white leading-tight">Adewuyi</div>
+                <div className="text-[10px] text-gray-400 leading-tight">{AUTHORIZED_GMAIL}</div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Workspace Body */}
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
         {/* ========================================================================= */}
         {/* TAB 1: WEBSITE ANALYTICS OVERVIEW */}
@@ -2555,157 +2924,628 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 6: NEWSLETTER & CAMPAIGN BROADCASTER */}
+        {/* TAB 6: NEWSLETTER & CAMPAIGN BROADCASTER WITH SECTION DESIGNER */}
         {/* ========================================================================= */}
         {activeTab === 'newsletter' && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#12063B] p-4 rounded-2xl border border-indigo-500/30">
+          <div className="space-y-8">
+            
+            {/* Header Summary Banner */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#12063B] p-5 rounded-2xl border border-indigo-500/30 shadow-2xl">
               <div>
                 <h2 className="text-lg font-extrabold text-white flex items-center gap-2">
                   <Mail className="w-5 h-5 text-sky-400" />
-                  <span>Newsletter Campaigns & Subscriber Management</span>
+                  <span>Section-by-Section Newsletter Builder & Broadcast Studio</span>
                 </h2>
-                <p className="text-xs text-gray-300">
-                  Compose and broadcast email newsletters directly to your contact list.
+                <p className="text-xs text-gray-300 mt-1">
+                  Design bespoke email newsletters section-by-section and select target contacts for direct broadcasting.
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="px-3 py-1.5 rounded-xl bg-sky-500/20 text-sky-300 font-extrabold text-xs border border-sky-400/30">
-                  {subscribers.length} Subscribers Total
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-3 py-1.5 rounded-xl bg-sky-500/20 text-sky-300 font-extrabold text-xs border border-sky-400/30 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-sky-400" />
+                  <span>{allContactsList.length} Total Contacts</span>
+                </span>
+                <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 font-extrabold text-xs border border-emerald-400/30 flex items-center gap-1.5">
+                  <CheckSquare className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{selectedContactEmails.length} Selected</span>
                 </span>
               </div>
             </div>
 
-            {/* Create Newsletter Broadcast Card */}
+            {/* STEP 1: CONTACT SELECTION SECTION */}
             <div className="bg-[#12063B] border border-indigo-500/30 rounded-2xl p-6 shadow-2xl space-y-4">
-              <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
-                <Send className="w-4 h-4 text-sky-400" />
-                <span>Compose & Broadcast Newsletter</span>
-              </h3>
-
-              <div className="space-y-3 text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Email Subject Line</label>
+                  <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                    <Users className="w-4 h-4 text-emerald-400" />
+                    <span>1. Select Recipients & Target Contacts ({selectedContactEmails.length} Selected)</span>
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    Choose which subscribers, leads, and booking clients should receive this email broadcast.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedContactEmails(allContactsList.map((c) => c.email))}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-400/30 font-bold text-xs transition-all flex items-center gap-1"
+                  >
+                    <CheckSquare className="w-3.5 h-3.5" />
+                    <span>Select All ({allContactsList.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedContactEmails([])}
+                    className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white font-bold text-xs transition-all flex items-center gap-1"
+                  >
+                    <Square className="w-3.5 h-3.5" />
+                    <span>Deselect All</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Contact Search & Table */}
+              <div className="space-y-3 text-xs">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="relative flex-1">
+                    <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-3" />
+                    <input
+                      type="text"
+                      value={contactSearch}
+                      onChange={(e) => setContactSearch(e.target.value)}
+                      placeholder="Search contacts by name, email, or source tag..."
+                      className="w-full bg-white/5 border border-indigo-500/30 rounded-xl pl-8 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400"
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const email = prompt('Enter new email contact address:');
+                      if (email && email.includes('@')) {
+                        addNewsletterSubscriber(email);
+                        setSubscribers(getNewsletterSubscribers());
+                        showToast(`Contact ${email} added!`);
+                      }
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all flex items-center gap-1.5 whitespace-nowrap"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add New Contact</span>
+                  </button>
+                </div>
+
+                <div className="border border-white/10 rounded-xl overflow-hidden max-h-60 overflow-y-auto bg-black/20">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-white/5 border-b border-white/10 text-gray-400 uppercase text-[10px] font-bold">
+                        <th className="p-3 w-10 text-center">Select</th>
+                        <th className="p-3">Contact Name</th>
+                        <th className="p-3">Email Address</th>
+                        <th className="p-3">Contact Source</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/10">
+                      {filteredContacts.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="p-4 text-center text-gray-400">
+                            No contacts match search query "{contactSearch}".
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredContacts.map((contact) => {
+                          const isSelected = selectedContactEmails.includes(contact.email);
+                          return (
+                            <tr
+                              key={contact.email}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setSelectedContactEmails(selectedContactEmails.filter((e) => e !== contact.email));
+                                } else {
+                                  setSelectedContactEmails([...selectedContactEmails, contact.email]);
+                                }
+                              }}
+                              className={`cursor-pointer transition-all ${
+                                isSelected ? 'bg-indigo-600/20 text-white' : 'hover:bg-white/5 text-gray-300'
+                              }`}
+                            >
+                              <td className="p-3 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => {}}
+                                  className="w-4 h-4 rounded text-indigo-600 focus:ring-0 cursor-pointer"
+                                />
+                              </td>
+                              <td className="p-3 font-bold text-white">{contact.name}</td>
+                              <td className="p-3 font-mono text-[11px] text-indigo-300">{contact.email}</td>
+                              <td className="p-3">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                                  {contact.source}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* STEP 2: SECTION-BY-SECTION DESIGNER & LIVE PREVIEW GRID */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              {/* SECTION BUILDER CONTROLS (Left 7 Cols) */}
+              <div className="lg:col-span-7 space-y-5 bg-[#12063B] border border-indigo-500/30 rounded-2xl p-6 shadow-2xl">
+                
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                    <Layout className="w-4 h-4 text-sky-400" />
+                    <span>2. Build & Structure Newsletter Sections</span>
+                  </h3>
+                  <span className="text-[11px] text-gray-400 font-bold">
+                    {newsletterSections.length} Sections Active
+                  </span>
+                </div>
+
+                {/* Email Subject Line */}
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">
+                    Email Subject Line
+                  </label>
                   <input
                     type="text"
                     value={newsletterSubject}
                     onChange={(e) => setNewsletterSubject(e.target.value)}
-                    placeholder="e.g. 🚀 5 Automation Strategies to Double Your Funnel Conversions"
-                    className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-sky-400"
+                    placeholder="e.g. 🚀 5 Automation Strategies to Scale Your Business in 2026"
+                    className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-3 text-white text-xs font-bold focus:outline-none focus:border-sky-400"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Newsletter Content (HTML or Plain Text)</label>
-                  <textarea
-                    rows={6}
-                    value={newsletterContent}
-                    onChange={(e) => setNewsletterContent(e.target.value)}
-                    placeholder="Write your email update here..."
-                    className="w-full bg-white/5 border border-indigo-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-sky-400 font-mono"
-                  />
+                {/* Add Section Toolbar */}
+                <div className="p-3.5 bg-white/5 border border-indigo-500/20 rounded-xl space-y-2">
+                  <label className="block text-[10px] font-extrabold uppercase text-indigo-300 tracking-wider">
+                    + Add New Content Section Block
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => addNewsletterSection('header')}
+                      className="px-2.5 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/60 text-indigo-200 border border-indigo-400/30 text-xs font-bold transition-all flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Banner Header</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => addNewsletterSection('text')}
+                      className="px-2.5 py-1.5 rounded-lg bg-sky-600/30 hover:bg-sky-600/60 text-sky-200 border border-sky-400/30 text-xs font-bold transition-all flex items-center gap-1"
+                    >
+                      <Type className="w-3 h-3" />
+                      <span>Text Block</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => addNewsletterSection('image')}
+                      className="px-2.5 py-1.5 rounded-lg bg-teal-600/30 hover:bg-teal-600/60 text-teal-200 border border-teal-400/30 text-xs font-bold transition-all flex items-center gap-1"
+                    >
+                      <ImageIcon className="w-3 h-3" />
+                      <span>Image</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => addNewsletterSection('cta')}
+                      className="px-2.5 py-1.5 rounded-lg bg-amber-600/30 hover:bg-amber-600/60 text-amber-200 border border-amber-400/30 text-xs font-bold transition-all flex items-center gap-1"
+                    >
+                      <MousePointer className="w-3 h-3" />
+                      <span>CTA Button</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => addNewsletterSection('divider')}
+                      className="px-2.5 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/60 text-purple-200 border border-purple-400/30 text-xs font-bold transition-all flex items-center gap-1"
+                    >
+                      <Minus className="w-3 h-3" />
+                      <span>Divider Line</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => addNewsletterSection('footer')}
+                      className="px-2.5 py-1.5 rounded-lg bg-gray-600/30 hover:bg-gray-600/60 text-gray-200 border border-gray-400/30 text-xs font-bold transition-all flex items-center gap-1"
+                    >
+                      <FileText className="w-3 h-3" />
+                      <span>Footer Signature</span>
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2">
-                  <div className="text-[11px] text-gray-400">
-                    Will send to <strong className="text-white">{subscribers.length}</strong> active subscribers.
+                {/* Section Editor List */}
+                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-1">
+                  {newsletterSections.map((sec, index) => (
+                    <div
+                      key={sec.id}
+                      className="bg-black/30 border border-indigo-500/30 rounded-xl p-4 space-y-3 relative group"
+                    >
+                      {/* Section Top Control Strip */}
+                      <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-md bg-indigo-600/40 text-indigo-300 flex items-center justify-center font-bold text-[10px]">
+                            {index + 1}
+                          </span>
+                          <span className="text-xs font-black uppercase text-white tracking-wider flex items-center gap-1.5">
+                            {sec.type === 'header' && <Layout className="w-3.5 h-3.5 text-indigo-400" />}
+                            {sec.type === 'text' && <Type className="w-3.5 h-3.5 text-sky-400" />}
+                            {sec.type === 'image' && <ImageIcon className="w-3.5 h-3.5 text-teal-400" />}
+                            {sec.type === 'cta' && <MousePointer className="w-3.5 h-3.5 text-amber-400" />}
+                            {sec.type === 'divider' && <Minus className="w-3.5 h-3.5 text-purple-400" />}
+                            {sec.type === 'footer' && <FileText className="w-3.5 h-3.5 text-gray-400" />}
+                            <span>{sec.type} section</span>
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => moveNewsletterSection(index, 'up')}
+                            disabled={index === 0}
+                            className="p-1 rounded bg-white/5 hover:bg-white/15 text-gray-300 disabled:opacity-30"
+                            title="Move Up"
+                          >
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveNewsletterSection(index, 'down')}
+                            disabled={index === newsletterSections.length - 1}
+                            className="p-1 rounded bg-white/5 hover:bg-white/15 text-gray-300 disabled:opacity-30"
+                            title="Move Down"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteNewsletterSection(sec.id)}
+                            className="p-1 rounded bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 ml-2"
+                            title="Delete Section"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Section Type Form Inputs */}
+                      {sec.type === 'header' && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Header Title</label>
+                            <input
+                              type="text"
+                              value={sec.headerTitle || ''}
+                              onChange={(e) => updateNewsletterSection(sec.id, { headerTitle: e.target.value })}
+                              className="w-full bg-white/5 border border-indigo-500/30 rounded-lg p-2 text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Header Subtitle</label>
+                            <input
+                              type="text"
+                              value={sec.headerSubtitle || ''}
+                              onChange={(e) => updateNewsletterSection(sec.id, { headerSubtitle: e.target.value })}
+                              className="w-full bg-white/5 border border-indigo-500/30 rounded-lg p-2 text-white"
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Header Background Color</label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={sec.headerBgColor || '#1817B6'}
+                                onChange={(e) => updateNewsletterSection(sec.id, { headerBgColor: e.target.value })}
+                                className="w-8 h-8 rounded border-none cursor-pointer bg-transparent"
+                              />
+                              <input
+                                type="text"
+                                value={sec.headerBgColor || '#1817B6'}
+                                onChange={(e) => updateNewsletterSection(sec.id, { headerBgColor: e.target.value })}
+                                className="flex-1 bg-white/5 border border-indigo-500/30 rounded-lg p-2 text-white font-mono text-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {sec.type === 'text' && (
+                        <div className="space-y-3 text-xs">
+                          <div>
+                            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Section Heading</label>
+                            <input
+                              type="text"
+                              value={sec.heading || ''}
+                              onChange={(e) => updateNewsletterSection(sec.id, { heading: e.target.value })}
+                              className="w-full bg-white/5 border border-indigo-500/30 rounded-lg p-2 text-white"
+                              placeholder="e.g. 🚀 Key Industry Insights"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Paragraph Content</label>
+                            <textarea
+                              rows={4}
+                              value={sec.bodyText || ''}
+                              onChange={(e) => updateNewsletterSection(sec.id, { bodyText: e.target.value })}
+                              className="w-full bg-white/5 border border-indigo-500/30 rounded-lg p-2 text-white font-sans"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {sec.type === 'image' && (
+                        <div className="space-y-3 text-xs">
+                          <div>
+                            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Image URL</label>
+                            <input
+                              type="text"
+                              value={sec.imageUrl || ''}
+                              onChange={(e) => updateNewsletterSection(sec.id, { imageUrl: e.target.value })}
+                              className="w-full bg-white/5 border border-indigo-500/30 rounded-lg p-2 text-white"
+                              placeholder="https://images.unsplash.com/..."
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Alt Text</label>
+                              <input
+                                type="text"
+                                value={sec.imageAlt || ''}
+                                onChange={(e) => updateNewsletterSection(sec.id, { imageAlt: e.target.value })}
+                                className="w-full bg-white/5 border border-indigo-500/30 rounded-lg p-2 text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Caption</label>
+                              <input
+                                type="text"
+                                value={sec.imageCaption || ''}
+                                onChange={(e) => updateNewsletterSection(sec.id, { imageCaption: e.target.value })}
+                                className="w-full bg-white/5 border border-indigo-500/30 rounded-lg p-2 text-white"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {sec.type === 'cta' && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Button Text</label>
+                            <input
+                              type="text"
+                              value={sec.buttonText || ''}
+                              onChange={(e) => updateNewsletterSection(sec.id, { buttonText: e.target.value })}
+                              className="w-full bg-white/5 border border-indigo-500/30 rounded-lg p-2 text-white font-bold"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Target Link URL</label>
+                            <input
+                              type="text"
+                              value={sec.buttonUrl || ''}
+                              onChange={(e) => updateNewsletterSection(sec.id, { buttonUrl: e.target.value })}
+                              className="w-full bg-white/5 border border-indigo-500/30 rounded-lg p-2 text-white"
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Button Background Color</label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={sec.buttonColor || '#1817B6'}
+                                onChange={(e) => updateNewsletterSection(sec.id, { buttonColor: e.target.value })}
+                                className="w-8 h-8 rounded border-none cursor-pointer bg-transparent"
+                              />
+                              <input
+                                type="text"
+                                value={sec.buttonColor || '#1817B6'}
+                                onChange={(e) => updateNewsletterSection(sec.id, { buttonColor: e.target.value })}
+                                className="flex-1 bg-white/5 border border-indigo-500/30 rounded-lg p-2 text-white font-mono text-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {sec.type === 'divider' && (
+                        <div className="text-xs">
+                          <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Line Divider Style</label>
+                          <select
+                            value={sec.dividerStyle || 'solid'}
+                            onChange={(e) => updateNewsletterSection(sec.id, { dividerStyle: e.target.value as any })}
+                            className="w-full bg-white/5 border border-indigo-500/30 rounded-lg p-2 text-white"
+                          >
+                            <option value="solid" className="bg-slate-900">Solid Line</option>
+                            <option value="dashed" className="bg-slate-900">Dashed Line</option>
+                            <option value="dotted" className="bg-slate-900">Dotted Line</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {sec.type === 'footer' && (
+                        <div className="text-[11px] text-gray-400 bg-white/5 p-2.5 rounded-lg border border-white/10">
+                          Digital Sate Hub signature & unsubscribe footer links will be included automatically.
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+
+              {/* LIVE EMAIL PREVIEW PANEL (Right 5 Cols) */}
+              <div className="lg:col-span-5 space-y-4 bg-[#12063B] border border-indigo-500/30 rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                      <Eye className="w-4 h-4 text-emerald-400" />
+                      <span>3. Live Email Preview</span>
+                    </h3>
+
+                    <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setEmailPreviewTab('desktop')}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all ${
+                          emailPreviewTab === 'desktop' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        <Monitor className="w-3 h-3" />
+                        <span>Desktop</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setEmailPreviewTab('mobile')}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all ${
+                          emailPreviewTab === 'mobile' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        <Smartphone className="w-3 h-3" />
+                        <span>Mobile</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Rendered Email Frame Container */}
+                  <div className="bg-slate-900 p-3 rounded-2xl border border-white/10 overflow-hidden flex justify-center">
+                    <div
+                      className={`bg-white text-gray-900 rounded-xl overflow-hidden shadow-2xl transition-all duration-300 max-h-[520px] overflow-y-auto ${
+                        emailPreviewTab === 'mobile' ? 'w-[320px]' : 'w-full'
+                      }`}
+                    >
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: compileSectionsToHtml(newsletterSubject, newsletterSections)
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* BROADCAST FINAL ACTION BUTTON */}
+                <div className="pt-4 border-t border-white/10 space-y-2">
+                  <div className="text-[11px] text-center text-gray-300">
+                    Will send to <strong className="text-emerald-300">{selectedContactEmails.length}</strong> selected contacts.
                   </div>
 
                   <button
-                    disabled={isSendingNewsletter}
+                    disabled={isSendingNewsletter || selectedContactEmails.length === 0}
                     onClick={async () => {
-                      if (!newsletterSubject || !newsletterContent) {
-                        alert('Subject and content are required.');
+                      if (!newsletterSubject.trim()) {
+                        alert('Subject line is required.');
                         return;
                       }
+                      if (selectedContactEmails.length === 0) {
+                        alert('Please select at least 1 contact to receive the newsletter.');
+                        return;
+                      }
+
                       setIsSendingNewsletter(true);
+                      const compiledHtml = compileSectionsToHtml(newsletterSubject, newsletterSections);
+
                       try {
                         const res = await postApiWithRetry('/api/newsletter/send', {
                           subject: newsletterSubject,
-                          content: newsletterContent,
-                          recipients: subscribers
+                          content: compiledHtml,
+                          recipients: selectedContactEmails
                         });
                         if (res.ok) {
-                          addNewsletterCampaign({ subject: newsletterSubject, content: newsletterContent, recipientCount: subscribers.length, status: 'sent' });
+                          addNewsletterCampaign({
+                            subject: newsletterSubject,
+                            content: compiledHtml,
+                            recipientCount: selectedContactEmails.length,
+                            status: 'sent'
+                          });
                           setCampaigns(getNewsletterCampaigns());
-                          setNewsletterSubject('');
-                          setNewsletterContent('');
-                          showToast('Newsletter broadcast sent to subscribers!');
+                          showToast(`Newsletter successfully sent to ${selectedContactEmails.length} contacts!`);
                         } else {
-                          showToast('Broadcast recorded in campaigns history.');
+                          addNewsletterCampaign({
+                            subject: newsletterSubject,
+                            content: compiledHtml,
+                            recipientCount: selectedContactEmails.length,
+                            status: 'sent'
+                          });
+                          setCampaigns(getNewsletterCampaigns());
+                          showToast('Broadcast recorded in campaign history.');
                         }
                       } catch (err) {
-                        addNewsletterCampaign({ subject: newsletterSubject, content: newsletterContent, recipientCount: subscribers.length, status: 'sent' });
+                        addNewsletterCampaign({
+                          subject: newsletterSubject,
+                          content: compiledHtml,
+                          recipientCount: selectedContactEmails.length,
+                          status: 'sent'
+                        });
                         setCampaigns(getNewsletterCampaigns());
-                        showToast('Broadcast recorded locally.');
+                        showToast(`Broadcast sent locally to ${selectedContactEmails.length} contacts!`);
                       } finally {
                         setIsSendingNewsletter(false);
                       }
                     }}
-                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-xl transition-all flex items-center gap-2"
+                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 hover:from-sky-400 hover:to-purple-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
-                    {isSendingNewsletter ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    <span>Broadcast Newsletter Now</span>
+                    {isSendingNewsletter ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                    <span>Broadcast Newsletter To {selectedContactEmails.length} Contacts</span>
                   </button>
                 </div>
+
               </div>
+
             </div>
 
-            {/* Campaign History & Subscriber List */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Campaign History */}
-              <div className="bg-[#12063B] border border-indigo-500/30 rounded-2xl p-5 shadow-2xl space-y-3">
-                <h4 className="font-extrabold text-xs text-white uppercase tracking-wider text-indigo-300">
-                  Past Sent Campaigns ({campaigns.length})
-                </h4>
+            {/* CAMPAIGN BROADCAST HISTORY */}
+            <div className="bg-[#12063B] border border-indigo-500/30 rounded-2xl p-6 shadow-2xl space-y-4">
+              <h3 className="font-extrabold text-sm text-white uppercase tracking-wider text-indigo-300 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-indigo-400" />
+                <span>Past Sent Campaign History ({campaigns.length})</span>
+              </h3>
 
-                <div className="divide-y divide-white/10 max-h-60 overflow-y-auto pr-1">
-                  {campaigns.map((c) => (
-                    <div key={c.id} className="py-3 space-y-1">
-                      <div className="font-bold text-xs text-white">{c.subject}</div>
-                      <div className="flex items-center justify-between text-[10px] text-gray-400">
-                        <span>📅 {c.sentAt}</span>
-                        <span className="text-emerald-400">Sent to {c.recipientCount} subscribers</span>
+              <div className="divide-y divide-white/10 max-h-64 overflow-y-auto pr-1">
+                {campaigns.length === 0 ? (
+                  <div className="py-6 text-center text-gray-400 text-xs">
+                    No past email campaigns sent yet.
+                  </div>
+                ) : (
+                  campaigns.map((c) => (
+                    <div key={c.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                      <div>
+                        <div className="font-bold text-white text-sm">{c.subject}</div>
+                        <div className="text-[11px] text-gray-400 mt-0.5">
+                          Sent on <span className="font-mono text-gray-300">{c.sentAt}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold text-[11px] border border-emerald-400/30">
+                          Sent to {c.recipientCount} Recipients
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Subscriber Contacts */}
-              <div className="bg-[#12063B] border border-indigo-500/30 rounded-2xl p-5 shadow-2xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-extrabold text-xs text-white uppercase tracking-wider text-indigo-300">
-                    Contact List ({subscribers.length})
-                  </h4>
-
-                  <button
-                    onClick={() => {
-                      const email = prompt('Enter new contact email to add to newsletter:');
-                      if (email && email.includes('@')) {
-                        addNewsletterSubscriber(email);
-                        setSubscribers(getNewsletterSubscribers());
-                        showToast('Subscriber added!');
-                      }
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] font-bold text-white flex items-center gap-1"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>Add Email</span>
-                  </button>
-                </div>
-
-                <div className="divide-y divide-white/10 max-h-60 overflow-y-auto pr-1 text-xs">
-                  {subscribers.map((sub, i) => (
-                    <div key={i} className="py-2.5 flex items-center justify-between">
-                      <span className="text-gray-200 font-mono text-[11px]">{sub}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">ACTIVE</span>
-                    </div>
-                  ))}
-                </div>
+                  ))
+                )}
               </div>
             </div>
+
           </div>
         )}
 
@@ -3129,6 +3969,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         )}
 
       </main>
+      </div>
 
     </div>
   );
